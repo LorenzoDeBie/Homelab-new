@@ -1,8 +1,0 @@
-apiVersion: v2
-name: gateway-api-resources
-description: Gateway API resources (Gateway, GatewayClass, Certificate) for internal services
-type: application
-version: 1.0.0
-
-# Note: Gateway API CRDs are installed via the main application.yaml from upstream
-# This chart only deploys the Gateway resources and Certificate
