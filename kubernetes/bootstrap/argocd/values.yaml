@@ -46,7 +46,8 @@ configs:
               sops --decrypt "$ARGOCD_ENV_FILE"
         lockRepo: false
       # Plugin for explicit SOPS file (specified via FILE env var in Application)
-      # ArgoCD prefixes Application env vars with PARAM_, so FILE becomes PARAM_FILE
+      # ArgoCD passes Application env vars with ARGOCD_ENV_ prefix
+      # So FILE becomes ARGOCD_ENV_FILE
       sops-file:
         allowConcurrency: true
         generate:
@@ -54,7 +55,7 @@ configs:
             - sh
             - "-c"
             - |
-              sops --decrypt "$PARAM_FILE"
+              sops --decrypt "$ARGOCD_ENV_FILE"
         lockRepo: false
 
 repoServer:
