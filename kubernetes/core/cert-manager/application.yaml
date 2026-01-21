@@ -29,7 +29,7 @@ spec:
         prometheus:
           enabled: true
           servicemonitor:
-            enabled: true
+            enabled: false  # CRD not available at sync-wave -5; enable after kube-prometheus-stack is deployed
         
         # DNS01 solver requires additional permissions
         extraArgs:
