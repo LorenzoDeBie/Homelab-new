@@ -1,0 +1,39 @@
+# Gateway for internal services (accessed via Tailscale)
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: internal-gateway
+  namespace: kube-system
+  annotations:
+    # Use Cilium as the Gateway implementation
+    io.cilium/lb-ipam-ips: "192.168.30.61"
+spec:
+  gatewayClassName: cilium
+  listeners:
+    - name: http
+      port: 80
+      protocol: HTTP
+      hostname: "*.int.lorenzodebie.be"
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https
+      port: 443
+      protocol: HTTPS
+      hostname: "*.int.lorenzodebie.be"
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: internal-wildcard-tls
+            namespace: kube-system
+---
+# GatewayClass for Cilium
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: cilium
+spec:
+  controllerName: io.cilium/gateway-controller

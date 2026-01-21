@@ -1,0 +1,86 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: plex
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://bjw-s.github.io/helm-charts
+    chart: app-template
+    targetRevision: 4.6.2
+    helm:
+      valuesObject:
+        controllers:
+          plex:
+            containers:
+              app:
+                image:
+                  repository: lscr.io/linuxserver/plex
+                  tag: latest
+                env:
+                  TZ: Europe/Brussels
+                  PUID: "1000"
+                  PGID: "1000"
+                  VERSION: docker
+                  PLEX_CLAIM: ""
+                resources:
+                  requests:
+                    cpu: 100m
+                    memory: 1Gi
+                  limits:
+                    memory: 8Gi
+                probes:
+                  liveness:
+                    enabled: true
+                  readiness:
+                    enabled: true
+                  startup:
+                    enabled: true
+                    spec:
+                      failureThreshold: 30
+                      periodSeconds: 5
+        
+        service:
+          app:
+            controller: plex
+            type: LoadBalancer
+            annotations:
+              io.cilium/lb-ipam-ips: "192.168.30.62"
+            ports:
+              http:
+                port: 32400
+        
+        persistence:
+          config:
+            enabled: true
+            type: persistentVolumeClaim
+            storageClass: nfs-config
+            accessMode: ReadWriteOnce
+            size: 50Gi
+          
+          media:
+            enabled: true
+            type: persistentVolumeClaim
+            existingClaim: media
+            globalMounts:
+              - path: /media
+                readOnly: true
+          
+          transcode:
+            enabled: true
+            type: emptyDir
+            globalMounts:
+              - path: /transcode
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: media
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

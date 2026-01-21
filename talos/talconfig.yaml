@@ -1,0 +1,103 @@
+# Talos configuration using talhelper
+# Generate configs with: talhelper genconfig
+# Docs: https://budimanjojo.github.io/talhelper/latest/
+
+clusterName: homelab
+talosVersion: v1.12.1
+kubernetesVersion: v1.35.0  # Note: v1.35.0 is latest but Talos v1.12.1 supports up to v1.32.x
+endpoint: https://192.168.30.50:6443
+
+# Allow workloads on control plane (single node cluster)
+allowSchedulingOnControlPlanes: true
+
+# Use Cilium as CNI (disable default Flannel)
+cniConfig:
+  name: none
+
+additionalApiServerCertSans:
+  - 192.168.30.50
+  - talos.int.lorenzodebie.be
+
+additionalMachineCertSans:
+  - 192.168.30.50
+  - talos.int.lorenzodebie.be
+
+nodes:
+  - hostname: talos-cp01
+    ipAddress: 192.168.30.50
+    installDisk: /dev/sda
+    controlPlane: true
+    networkInterfaces:
+      - deviceSelector:
+          busPath: "0*"  # First network device
+        dhcp: false
+        addresses:
+          - 192.168.30.50/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.30.1
+        mtu: 1500
+        vip:
+          ip: 192.168.30.50  # Same as node IP for single node
+
+controlPlane:
+  patches:
+    - |-
+      cluster:
+        # Disable default CNI
+        network:
+          cni:
+            name: none
+        # Disable kube-proxy (Cilium will replace it)
+        proxy:
+          disabled: true
+        # ArgoCD needs these permissions
+        apiServer:
+          admissionControl: []
+        # Enable metrics for monitoring
+        controllerManager:
+          extraArgs:
+            bind-address: 0.0.0.0
+        scheduler:
+          extraArgs:
+            bind-address: 0.0.0.0
+        etcd:
+          extraArgs:
+            listen-metrics-urls: http://0.0.0.0:2381
+      machine:
+        # Required sysctls for Cilium
+        sysctls:
+          net.core.somaxconn: "65535"
+          net.core.rmem_max: "2500000"
+          net.core.wmem_max: "2500000"
+        # Time sync
+        time:
+          servers:
+            - time.cloudflare.com
+        # Nameservers (Pi-hole)
+        network:
+          nameservers:
+            - 192.168.30.45
+            - 192.168.30.5
+        # Kubelet configuration
+        kubelet:
+          extraArgs:
+            rotate-server-certificates: "true"
+          extraMounts:
+            # Mount for NFS
+            - destination: /var/mnt
+              type: bind
+              source: /var/mnt
+              options:
+                - bind
+                - rshared
+                - rw
+        # Features
+        features:
+          rbac: true
+          kubernetesTalosAPIAccess:
+            enabled: true
+            allowedRoles:
+              - os:admin
+            allowedKubernetesNamespaces:
+              - system-upgrade

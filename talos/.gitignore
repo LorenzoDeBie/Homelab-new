@@ -1,0 +1,6 @@
+# Generated Talos configs (contain secrets)
+clusterconfig/
+*.yaml.bak
+
+# Keep talconfig.yaml tracked
+!talconfig.yaml

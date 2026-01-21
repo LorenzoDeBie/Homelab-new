@@ -1,0 +1,74 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sonarr
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://bjw-s.github.io/helm-charts
+    chart: app-template
+    targetRevision: 4.6.2
+    helm:
+      valuesObject:
+        controllers:
+          sonarr:
+            containers:
+              app:
+                image:
+                  repository: lscr.io/linuxserver/sonarr
+                  tag: latest
+                env:
+                  TZ: Europe/Brussels
+                  PUID: "1000"
+                  PGID: "1000"
+                resources:
+                  requests:
+                    cpu: 50m
+                    memory: 256Mi
+                  limits:
+                    memory: 1Gi
+                probes:
+                  liveness:
+                    enabled: true
+                  readiness:
+                    enabled: true
+                  startup:
+                    enabled: true
+                    spec:
+                      failureThreshold: 30
+                      periodSeconds: 5
+        
+        service:
+          app:
+            controller: sonarr
+            ports:
+              http:
+                port: 8989
+        
+        persistence:
+          config:
+            enabled: true
+            type: persistentVolumeClaim
+            storageClass: nfs-config
+            accessMode: ReadWriteOnce
+            size: 5Gi
+          
+          media:
+            enabled: true
+            type: persistentVolumeClaim
+            existingClaim: media
+            globalMounts:
+              - path: /media
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: media
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

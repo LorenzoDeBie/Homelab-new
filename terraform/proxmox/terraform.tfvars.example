@@ -1,0 +1,31 @@
+# Proxmox Connection
+# ------------------
+# Option 1: Username/Password (simpler but less secure)
+proxmox_endpoint = "https://PROXMOX_IP:8006/api2/json"
+proxmox_username = "root@pam"
+proxmox_password = "YOUR_PASSWORD"
+
+# Option 2: API Token (recommended)
+# proxmox_endpoint         = "https://PROXMOX_IP:8006/api2/json"
+# proxmox_api_token_id     = "terraform@pve!terraform"
+# proxmox_api_token_secret = "YOUR_TOKEN_SECRET"
+
+# Proxmox Node
+proxmox_node = "pve"  # Change to your node name
+
+# VM Configuration
+vm_id        = 200
+vm_name      = "talos-homelab"
+vm_cores     = 6
+vm_memory    = 16384  # 16GB
+vm_disk_size = 100    # 100GB
+vm_storage   = "local-lvm"
+vm_bridge    = "vmbr0"
+vm_vlan_tag  = 30     # Set to -1 if not using VLANs
+
+# Talos ISO
+# IMPORTANT: The Telmate provider doesn't support downloading ISOs.
+# You must manually upload the Talos ISO to Proxmox before running terraform.
+# Get the ISO from https://factory.talos.dev and upload it to your Proxmox node.
+# Format: <storage>:iso/<filename>
+talos_iso_path = "local:iso/talos-v1.12.1-amd64.iso"

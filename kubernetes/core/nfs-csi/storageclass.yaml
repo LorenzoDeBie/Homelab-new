@@ -1,0 +1,73 @@
+# StorageClass for media - single share for hardlink support
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-media
+provisioner: nfs.csi.k8s.io
+parameters:
+  server: TRUENAS_IP  # TODO: Update with TrueNAS IP
+  share: /mnt/POOL_NAME/media  # TODO: Update with your pool name
+  mountPermissions: "0777"
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+mountOptions:
+  - nfsvers=4.1
+  - hard
+  - noatime
+---
+# StorageClass for app configs
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-config
+provisioner: nfs.csi.k8s.io
+parameters:
+  server: TRUENAS_IP  # TODO: Update with TrueNAS IP
+  share: /mnt/POOL_NAME/k8s-config  # TODO: Update with your pool name
+  mountPermissions: "0777"
+  subDir: ${pvc.metadata.namespace}/${pvc.metadata.name}  # Auto-create subdirs
+  onDelete: retain
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+mountOptions:
+  - nfsvers=4.1
+  - hard
+  - noatime
+---
+# Static PV for media (shared by all media apps for hardlinks)
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: media-pv
+spec:
+  capacity:
+    storage: 10Ti  # Adjust to your TrueNAS dataset size
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-media
+  csi:
+    driver: nfs.csi.k8s.io
+    volumeHandle: media-pv
+    volumeAttributes:
+      server: TRUENAS_IP  # TODO: Update with TrueNAS IP
+      share: /mnt/POOL_NAME/media  # TODO: Update with your pool name
+  mountOptions:
+    - nfsvers=4.1
+    - hard
+    - noatime
+---
+# PVC for media (used by all media apps)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: media
+  namespace: media
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-media
+  resources:
+    requests:
+      storage: 10Ti
+  volumeName: media-pv

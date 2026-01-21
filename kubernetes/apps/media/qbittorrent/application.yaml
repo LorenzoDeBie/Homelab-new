@@ -1,0 +1,88 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: qbittorrent
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://bjw-s.github.io/helm-charts
+    chart: app-template
+    targetRevision: 4.6.2
+    helm:
+      valuesObject:
+        controllers:
+          qbittorrent:
+            containers:
+              app:
+                image:
+                  repository: lscr.io/linuxserver/qbittorrent
+                  tag: latest
+                env:
+                  TZ: Europe/Brussels
+                  PUID: "1000"
+                  PGID: "1000"
+                  WEBUI_PORT: &port 8080
+                  TORRENTING_PORT: &btport 50413
+                resources:
+                  requests:
+                    cpu: 50m
+                    memory: 256Mi
+                  limits:
+                    memory: 2Gi
+                probes:
+                  liveness:
+                    enabled: true
+                  readiness:
+                    enabled: true
+                  startup:
+                    enabled: true
+                    spec:
+                      failureThreshold: 30
+                      periodSeconds: 5
+        
+        service:
+          app:
+            controller: qbittorrent
+            ports:
+              http:
+                port: *port
+          bittorrent:
+            controller: qbittorrent
+            type: LoadBalancer
+            annotations:
+              io.cilium/lb-ipam-ips: "192.168.30.63"
+            ports:
+              bittorrent-tcp:
+                port: *btport
+                protocol: TCP
+              bittorrent-udp:
+                port: *btport
+                protocol: UDP
+        
+        persistence:
+          config:
+            enabled: true
+            type: persistentVolumeClaim
+            storageClass: nfs-config
+            accessMode: ReadWriteOnce
+            size: 1Gi
+          
+          media:
+            enabled: true
+            type: persistentVolumeClaim
+            existingClaim: media
+            globalMounts:
+              - path: /media
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: media
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

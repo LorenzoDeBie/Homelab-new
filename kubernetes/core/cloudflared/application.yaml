@@ -1,0 +1,46 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cloudflared
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://cloudflare.github.io/helm-charts
+    chart: cloudflare-tunnel
+    targetRevision: 0.3.1
+    helm:
+      valuesObject:
+        # Cloudflare Tunnel configuration
+        cloudflare:
+          # Tunnel credentials from SOPS-encrypted secret
+          secretName: cloudflared-credentials
+          
+          # Ingress rules - route traffic to services
+          ingress:
+            # Plex - public access
+            - hostname: plex.lorenzodebie.be
+              service: http://plex.media.svc.cluster.local:32400
+            
+            # Overseerr - public access for media requests
+            - hostname: requests.lorenzodebie.be
+              service: http://overseerr.media.svc.cluster.local:5055
+            
+            # Catch-all (required)
+            - service: http_status:404
+        
+        replicaCount: 1
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cloudflared
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

@@ -1,0 +1,94 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: authentik
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://charts.goauthentik.io
+    chart: authentik
+    targetRevision: 2025.12.1
+    helm:
+      valuesObject:
+        # Global settings
+        authentik:
+          secret_key: ""  # Set via secret
+          error_reporting:
+            enabled: false
+          postgresql:
+            password: ""  # Set via secret
+        
+        # Use external secret for credentials
+        global:
+          env:
+            - name: AUTHENTIK_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: authentik-secrets
+                  key: secret-key
+            - name: AUTHENTIK_POSTGRESQL__PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: authentik-secrets
+                  key: postgresql-password
+            - name: AUTHENTIK_BOOTSTRAP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: authentik-secrets
+                  key: bootstrap-password
+            - name: AUTHENTIK_BOOTSTRAP_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: authentik-secrets
+                  key: bootstrap-email
+        
+        server:
+          replicas: 1
+          metrics:
+            enabled: true
+            serviceMonitor:
+              enabled: true
+        
+        worker:
+          replicas: 1
+        
+        # Embedded PostgreSQL
+        postgresql:
+          enabled: true
+          auth:
+            existingSecret: authentik-secrets
+            secretKeys:
+              adminPasswordKey: postgresql-password
+              userPasswordKey: postgresql-password
+          primary:
+            persistence:
+              enabled: true
+              storageClass: nfs-config
+              size: 8Gi
+        
+        # Embedded Redis
+        redis:
+          enabled: true
+          architecture: standalone
+          auth:
+            enabled: false
+          master:
+            persistence:
+              enabled: true
+              storageClass: nfs-config
+              size: 2Gi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: authentik
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

@@ -1,0 +1,15 @@
+# SOPS configuration
+# Generate an age key with: age-keygen -o age.key
+# The public key goes here, the private key goes to ArgoCD as a secret
+
+creation_rules:
+  # Encrypt all .sops.yaml files
+  - path_regex: .*\.sops\.yaml$
+    encrypted_regex: ^(data|stringData)$
+    age: >-
+      age1g6uhy72aszly2j77d0wmy4mwy5f9ezxe2w9fu2ensal4mn5uufyqqpcf8h
+
+  # Encrypt talos secrets
+  - path_regex: talos/.*secret.*\.yaml$
+    age: >-
+      age1g6uhy72aszly2j77d0wmy4mwy5f9ezxe2w9fu2ensal4mn5uufyqqpcf8h

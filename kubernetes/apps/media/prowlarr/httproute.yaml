@@ -1,0 +1,20 @@
+# HTTPRoute for Prowlarr - internal access only
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: prowlarr
+  namespace: media
+spec:
+  parentRefs:
+    - name: internal-gateway
+      namespace: kube-system
+  hostnames:
+    - prowlarr.int.lorenzodebie.be
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: prowlarr
+          port: 9696

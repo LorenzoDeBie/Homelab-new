@@ -1,0 +1,33 @@
+# Age private key - NEVER commit
+age.key
+*.age
+
+# Terraform
+**/.terraform/
+**/.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+
+# Talos generated configs (contain secrets)
+talos/clusterconfig/
+
+# Kubernetes secrets (unencrypted)
+# Note: *.sops.yaml files ARE safe to commit (they're encrypted)
+**/secret.yaml
+**/secrets.yaml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.bak

@@ -1,0 +1,88 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cilium
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://helm.cilium.io
+    chart: cilium
+    targetRevision: 1.18.6
+    helm:
+      valuesObject:
+        # Talos-specific settings
+        ipam:
+          mode: kubernetes
+        
+        # Disable kube-proxy replacement
+        kubeProxyReplacement: true
+        
+        # Required for Talos
+        securityContext:
+          capabilities:
+            ciliumAgent:
+              - CHOWN
+              - KILL
+              - NET_ADMIN
+              - NET_RAW
+              - IPC_LOCK
+              - SYS_ADMIN
+              - SYS_RESOURCE
+              - DAC_OVERRIDE
+              - FOWNER
+              - SETGID
+              - SETUID
+            cleanCiliumState:
+              - NET_ADMIN
+              - SYS_ADMIN
+              - SYS_RESOURCE
+        
+        cgroup:
+          autoMount:
+            enabled: false
+          hostRoot: /sys/fs/cgroup
+        
+        k8sServiceHost: localhost
+        k8sServicePort: 7445
+        
+        # Gateway API
+        gatewayAPI:
+          enabled: true
+        
+        # L2 announcements for LoadBalancer services
+        l2announcements:
+          enabled: true
+        
+        externalIPs:
+          enabled: true
+        
+        # Hubble for observability
+        hubble:
+          enabled: true
+          relay:
+            enabled: true
+          ui:
+            enabled: true
+        
+        # Operator settings
+        operator:
+          replicas: 1
+        
+        # BGP (optional, for advanced routing)
+        bgpControlPlane:
+          enabled: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
