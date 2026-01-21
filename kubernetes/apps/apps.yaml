@@ -9,7 +9,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/YOUR_GITHUB_USERNAME/homelab.git  # TODO: Update with your repo
+    repoURL: https://github.com/LorenzoDeBie/Homelab-new.git
     targetRevision: main
     path: kubernetes/apps
     directory:
