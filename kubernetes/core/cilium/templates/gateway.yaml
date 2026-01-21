@@ -5,7 +5,8 @@ metadata:
   name: internal-gateway
   namespace: kube-system
   annotations:
-    argocd.argoproj.io/sync-wave: "-5"
+    # Deploy after Certificate (sync-wave 0) to ensure TLS secret exists
+    argocd.argoproj.io/sync-wave: "1"
     # Use Cilium as the Gateway implementation
     io.cilium/lb-ipam-ips: "192.168.30.61"
 spec:
@@ -31,12 +32,12 @@ spec:
           - name: internal-wildcard-tls
             namespace: kube-system
 ---
-# GatewayClass for Cilium
+# GatewayClass for Cilium - must be created before Gateway
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
   name: cilium
   annotations:
-    argocd.argoproj.io/sync-wave: "-5"
+    argocd.argoproj.io/sync-wave: "-10"
 spec:
   controllerName: io.cilium/gateway-controller
