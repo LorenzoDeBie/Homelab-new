@@ -1,0 +1,22 @@
+# Values passed to the cert-manager subchart
+cert-manager:
+  # Install CRDs
+  crds:
+    enabled: true
+
+  # Enable Gateway API support
+  config:
+    apiVersion: controller.config.cert-manager.io/v1alpha1
+    kind: ControllerConfiguration
+    enableGatewayAPI: true
+
+  # Prometheus metrics
+  prometheus:
+    enabled: true
+    servicemonitor:
+      enabled: false  # CRD not available at sync-wave -5; enable after kube-prometheus-stack is deployed
+
+  # DNS01 solver requires additional permissions
+  extraArgs:
+    - --dns01-recursive-nameservers-only
+    - --dns01-recursive-nameservers=1.1.1.1:53,8.8.8.8:53

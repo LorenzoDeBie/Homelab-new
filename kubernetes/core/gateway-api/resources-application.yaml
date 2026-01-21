@@ -1,10 +1,11 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: cert-manager
+  name: gateway-api-resources
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-5"
+    # After cert-manager (-5), Gateway API CRDs (-15), and Cilium (-10)
+    argocd.argoproj.io/sync-wave: "-4"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -12,17 +13,14 @@ spec:
   source:
     repoURL: https://github.com/LorenzoDeBie/Homelab-new.git
     targetRevision: main
-    path: kubernetes/core/cert-manager
-    helm:
-      valueFiles:
-        - values.yaml
+    path: kubernetes/core/gateway-api
+    helm: {}
   destination:
     server: https://kubernetes.default.svc
-    namespace: cert-manager
+    namespace: kube-system
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
-      - CreateNamespace=true
       - ServerSideApply=true

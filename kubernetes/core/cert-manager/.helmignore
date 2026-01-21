@@ -1,0 +1,5 @@
+# ArgoCD Applications - not part of Helm chart
+application.yaml
+secrets-application.yaml
+# SOPS secret is deployed via separate ArgoCD plugin
+cloudflare-secret.sops.yaml

@@ -1,0 +1,11 @@
+apiVersion: v2
+name: cert-manager-umbrella
+description: Cert-manager with ClusterIssuers and Cloudflare credentials for DNS01 challenges
+type: application
+version: 1.0.0
+appVersion: "1.19.2"
+
+dependencies:
+  - name: cert-manager
+    version: v1.19.2
+    repository: https://charts.jetstack.io
