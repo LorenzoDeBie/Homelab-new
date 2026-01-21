@@ -17,10 +17,15 @@ spec:
       valuesObject:
         # Cloudflare Tunnel configuration
         cloudflare:
+          # Tunnel ID - required for cloudflared to know which tunnel to run
+          # Note: tunnelName is used by the chart to set the 'tunnel' config value
+          tunnelName: f725ee00-7559-4fa2-ad97-cf4044b3770b
+          
           # Tunnel credentials from SOPS-encrypted secret
           secretName: cloudflared-credentials
           
           # Ingress rules - route traffic to services
+          # Note: The chart automatically adds a catch-all http_status:404 rule
           ingress:
             # Plex - public access
             - hostname: plex.lorenzodebie.be
@@ -29,9 +34,6 @@ spec:
             # Overseerr - public access for media requests
             - hostname: requests.lorenzodebie.be
               service: http://overseerr.media.svc.cluster.local:5055
-            
-            # Catch-all (required)
-            - service: http_status:404
         
         replicaCount: 1
   destination:
