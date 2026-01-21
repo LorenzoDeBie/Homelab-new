@@ -18,6 +18,9 @@ talos/clusterconfig/
 **/secret.yaml
 **/secrets.yaml
 
+# Helm downloaded dependencies (regenerated via helm dependency build)
+**/charts/
+
 # OS files
 .DS_Store
 Thumbs.db
