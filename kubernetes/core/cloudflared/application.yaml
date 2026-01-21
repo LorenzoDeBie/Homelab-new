@@ -12,7 +12,7 @@ spec:
   source:
     repoURL: https://cloudflare.github.io/helm-charts
     chart: cloudflare-tunnel
-    targetRevision: 0.3.1
+    targetRevision: 0.3.2
     helm:
       valuesObject:
         # Cloudflare Tunnel configuration
