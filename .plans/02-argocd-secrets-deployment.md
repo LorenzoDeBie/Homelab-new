@@ -1,6 +1,6 @@
 # Issue 2: SOPS-Encrypted Secrets Not Being Deployed
 
-## Status: BLOCKING
+## Status: RESOLVED
 
 ## Affected Pods (as of 2026-01-21)
 - `authentik-server-785db8dccd-rmxk6` - CreateContainerConfigError (missing `authentik-secrets`)
@@ -159,3 +159,57 @@ kubectl get secret operator-oauth -n tailscale
 # Pods should transition out of error states
 kubectl get pods -A | grep -E "authentik|cloudflared|tailscale"
 ```
+
+## Resolution (2026-01-21)
+
+The SOPS secrets deployment issue was resolved using a custom ArgoCD Config Management Plugin (CMP) approach:
+
+### Changes Made
+
+1. **Created secrets-application.yaml files** for each component:
+   - `kubernetes/core/authentik/secrets-application.yaml`
+   - `kubernetes/core/cloudflared/secrets-application.yaml`
+   - `kubernetes/core/tailscale-operator/secrets-application.yaml`
+
+   Each uses the `sops-file` CMP plugin and passes the encrypted filename via the `FILE` environment variable.
+
+2. **Updated ArgoCD core application** (`kubernetes/core/argocd-apps.yaml`):
+   - Changed include pattern from `*/application.yaml` to `*/*application.yaml` to match both `application.yaml` and `secrets-application.yaml` files
+
+3. **Added SOPS CMP plugin to ArgoCD** (`kubernetes/bootstrap/argocd/values.yaml`):
+   - Added `sops-file` plugin configuration under `configs.cmp.plugins`
+   - Added sidecar container `sops-plugin` to repo-server that runs the CMP server
+   - Mounted the age key secret and SOPS binary to the sidecar
+   - ArgoCD passes Application env vars with `ARGOCD_ENV_` prefix, so `FILE` becomes `ARGOCD_ENV_FILE`
+
+4. **Updated sops-age secret** with the correct private key matching the public key used to encrypt the SOPS files
+
+### Key Learnings
+
+- ArgoCD CMP plugins require a sidecar container in the repo-server deployment
+- Application `plugin.env` variables are passed to the CMP with `ARGOCD_ENV_` prefix (not `PARAM_` as some docs suggest)
+- The CMP plugin ConfigMap is created by `configs.cmp` but the sidecar must be configured via `repoServer.extraContainers`
+
+### Verification
+
+All secrets are now deployed and synced:
+```bash
+$ kubectl get application -n argocd | grep secret
+authentik-secrets     Synced        Healthy
+cloudflared-secrets   Synced        Healthy
+tailscale-secrets     Synced        Healthy
+
+$ kubectl get secret authentik-secrets -n authentik
+NAME                TYPE     DATA   AGE
+authentik-secrets   Opaque   4      Xs
+
+$ kubectl get secret cloudflared-credentials -n cloudflared
+NAME                      TYPE     DATA   AGE
+cloudflared-credentials   Opaque   3      Xs
+
+$ kubectl get secret operator-oauth -n tailscale
+NAME             TYPE     DATA   AGE
+operator-oauth   Opaque   2      Xs
+```
+
+The tailscale-operator pod is now running successfully. Other pods (authentik, cloudflared) have unrelated configuration issues documented separately.
