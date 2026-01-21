@@ -52,7 +52,7 @@ spec:
           metrics:
             enabled: true
             serviceMonitor:
-              enabled: true
+              enabled: false  # Enable after kube-prometheus-stack is deployed
         
         worker:
           replicas: 1
