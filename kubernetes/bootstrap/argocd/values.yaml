@@ -29,10 +29,11 @@ configs:
         end
       end
       return hs
-  # SOPS age decryption
+  # SOPS age decryption plugins
   cmp:
     create: true
     plugins:
+      # Plugin for single SOPS files (auto-discovered)
       sops:
         allowConcurrency: true
         discover:
@@ -42,7 +43,17 @@ configs:
             - sh
             - "-c"
             - |
-              sops --decrypt $ARGOCD_ENV_FILE
+              sops --decrypt "$ARGOCD_ENV_FILE"
+        lockRepo: false
+      # Plugin for explicit SOPS file (specified via PARAM_FILE env var)
+      sops-file:
+        allowConcurrency: true
+        generate:
+          command:
+            - sh
+            - "-c"
+            - |
+              sops --decrypt "$PARAM_FILE"
         lockRepo: false
 
 repoServer:
