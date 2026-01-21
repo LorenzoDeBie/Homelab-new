@@ -65,7 +65,14 @@ spec:
             secretKeys:
               adminPasswordKey: postgresql-password
               userPasswordKey: postgresql-password
+          # Run as UID/GID 3001 (media user) to match NFS Mapall setting
+          # This avoids needing root_squash disabled on NFS
           primary:
+            containerSecurityContext:
+              runAsUser: 3001
+              runAsGroup: 3001
+            podSecurityContext:
+              fsGroup: 3001
             persistence:
               enabled: true
               storageClass: nfs-config
