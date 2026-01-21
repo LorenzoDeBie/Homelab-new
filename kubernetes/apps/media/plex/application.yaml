@@ -61,6 +61,10 @@ spec:
             accessMode: ReadWriteOnce
             size: 50Gi
           
+          # Shared media volume (read-only for Plex)
+          # Configure in Plex UI:
+          #   TV Library: /media/media/tv
+          #   Movies Library: /media/media/movies
           media:
             enabled: true
             type: persistentVolumeClaim

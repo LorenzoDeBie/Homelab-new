@@ -56,6 +56,10 @@ spec:
             accessMode: ReadWriteOnce
             size: 5Gi
           
+          # Shared media volume for hardlink support
+          # Configure in Sonarr UI:
+          #   Root Folder: /media/media/tv
+          #   Download Client Remote Path: /media/torrents
           media:
             enabled: true
             type: persistentVolumeClaim

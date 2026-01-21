@@ -22,22 +22,22 @@ This document covers the storage architecture, NFS CSI driver setup, StorageClas
 |                       TrueNAS Server                              |
 |                                                                   |
 |  +----------------------------+  +----------------------------+   |
-|  |   Pool: tank (or yours)   |  |                            |   |
+|  |   Pool: main-hdd-raid1    |  |                            |   |
 |  |                            |  |                            |   |
 |  |  +----------------------+  |  |  +----------------------+  |   |
 |  |  | Dataset: media       |  |  |  | Dataset: k8s-config  |  |   |
-|  |  | /mnt/tank/media      |  |  |  | /mnt/tank/k8s-config |  |   |
+|  |  | /mnt/.../media       |  |  |  | /mnt/.../k8s-config  |  |   |
 |  |  |                      |  |  |  |                      |  |   |
-|  |  | ├── downloads/       |  |  |  | ├── media/           |  |   |
-|  |  | │   ├── complete/    |  |  |  | │   ├── sonarr/      |  |   |
-|  |  | │   └── incomplete/  |  |  |  | │   ├── radarr/      |  |   |
-|  |  | ├── tv/              |  |  |  | │   ├── prowlarr/    |  |   |
-|  |  | │   └── Shows/       |  |  |  | │   ├── plex/        |  |   |
-|  |  | └── movies/          |  |  |  | │   └── qbittorrent/ |  |   |
-|  |  |     └── Films/       |  |  |  | ├── observability/   |  |   |
-|  |  +----------------------+  |  |  | │   ├── prometheus/  |  |   |
-|  |                            |  |  | │   ├── grafana/     |  |   |
-|  +----------------------------+  |  | │   └── loki/        |  |   |
+|  |  | ├── media/           |  |  |  | ├── media/           |  |   |
+|  |  | │   ├── tv/          |  |  |  | │   ├── sonarr/      |  |   |
+|  |  | │   └── movies/      |  |  |  | │   ├── radarr/      |  |   |
+|  |  | └── torrents/        |  |  |  | │   ├── prowlarr/    |  |   |
+|  |  |                      |  |  |  | │   ├── plex/        |  |   |
+|  |  |                      |  |  |  | │   └── qbittorrent/ |  |   |
+|  |  +----------------------+  |  |  | ├── observability/   |  |   |
+|  |                            |  |  | │   ├── prometheus/  |  |   |
+|  +----------------------------+  |  | │   ├── grafana/     |  |   |
+|                                  |  | │   └── loki/        |  |   |
 |                                  |  | └── authentik/       |  |   |
 |                                  |  +----------------------+  |   |
 |                                  +----------------------------+   |
@@ -156,16 +156,20 @@ chmod 777 /mnt/<pool>/k8s-config
 # Apply recursively: Yes (for existing data)
 ```
 
-### Create Media Directory Structure
+### Media Directory Structure
+
+The expected folder structure on TrueNAS:
 
 ```bash
-# On TrueNAS
-mkdir -p /mnt/<pool>/media/downloads/complete
-mkdir -p /mnt/<pool>/media/downloads/incomplete
-mkdir -p /mnt/<pool>/media/tv
-mkdir -p /mnt/<pool>/media/movies
+# Existing structure on TrueNAS
+/mnt/main-hdd-raid1/media/
+├── media/           # Media library root
+│   ├── tv/          # TV shows
+│   └── movies/      # Movies
+└── torrents/        # Downloads from qBittorrent
 
-chmod -R 777 /mnt/<pool>/media
+# Ensure permissions are correct
+chmod -R 777 /mnt/main-hdd-raid1/media
 ```
 
 ### Verify NFS Export
@@ -364,18 +368,18 @@ persistence:
 
 | App | Mount Path | TrueNAS Path |
 |-----|------------|--------------|
-| qBittorrent | /media/downloads | /mnt/pool/media/downloads |
-| Sonarr | /media | /mnt/pool/media |
-| Radarr | /media | /mnt/pool/media |
-| Plex | /media | /mnt/pool/media |
+| qBittorrent | /media/torrents | /mnt/main-hdd-raid1/media/torrents |
+| Sonarr | /media | /mnt/main-hdd-raid1/media |
+| Radarr | /media | /mnt/main-hdd-raid1/media |
+| Plex | /media | /mnt/main-hdd-raid1/media |
 
 ### Configure *arr Apps for Hardlinks
 
 In Sonarr/Radarr settings:
 
-1. **Root Folder**: Set to `/media/tv` or `/media/movies`
+1. **Root Folder**: Set to `/media/media/tv` or `/media/media/movies`
 2. **Download Client**: 
-   - Remote Path: `/media/downloads/complete`
+   - Remote Path: `/media/torrents`
    - Category: `tv` or `movies` (optional)
 
 ## Application Configuration Storage

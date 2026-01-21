@@ -70,6 +70,9 @@ spec:
             accessMode: ReadWriteOnce
             size: 1Gi
           
+          # Shared media volume for hardlink support
+          # Configure in qBittorrent UI:
+          #   Default Save Path: /media/torrents
           media:
             enabled: true
             type: persistentVolumeClaim
