@@ -5,8 +5,8 @@ metadata:
   name: nfs-media
 provisioner: nfs.csi.k8s.io
 parameters:
-  server: TRUENAS_IP  # TODO: Update with TrueNAS IP
-  share: /mnt/POOL_NAME/media  # TODO: Update with your pool name
+  server: 192.168.30.5
+  share: /mnt/main-hdd-raid1/media
   mountPermissions: "0777"
 reclaimPolicy: Retain
 volumeBindingMode: Immediate
@@ -22,8 +22,8 @@ metadata:
   name: nfs-config
 provisioner: nfs.csi.k8s.io
 parameters:
-  server: TRUENAS_IP  # TODO: Update with TrueNAS IP
-  share: /mnt/POOL_NAME/k8s-config  # TODO: Update with your pool name
+  server: 192.168.30.5
+  share: /mnt/main-hdd-raid1/k8s-config
   mountPermissions: "0777"
   subDir: ${pvc.metadata.namespace}/${pvc.metadata.name}  # Auto-create subdirs
   onDelete: retain
@@ -41,7 +41,7 @@ metadata:
   name: media-pv
 spec:
   capacity:
-    storage: 10Ti  # Adjust to your TrueNAS dataset size
+    storage: 2.5TiB
   accessModes:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain
@@ -50,8 +50,8 @@ spec:
     driver: nfs.csi.k8s.io
     volumeHandle: media-pv
     volumeAttributes:
-      server: TRUENAS_IP  # TODO: Update with TrueNAS IP
-      share: /mnt/POOL_NAME/media  # TODO: Update with your pool name
+      server: 192.168.30.5
+      share: /mnt/main-hdd-raid1/media
   mountOptions:
     - nfsvers=4.1
     - hard
