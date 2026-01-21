@@ -5,6 +5,8 @@ kind: Certificate
 metadata:
   name: internal-wildcard-tls
   namespace: kube-system
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   secretName: internal-wildcard-tls
   issuerRef:

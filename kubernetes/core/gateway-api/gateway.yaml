@@ -5,6 +5,7 @@ metadata:
   name: internal-gateway
   namespace: kube-system
   annotations:
+    argocd.argoproj.io/sync-wave: "-5"
     # Use Cilium as the Gateway implementation
     io.cilium/lb-ipam-ips: "192.168.30.61"
 spec:
@@ -35,5 +36,7 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
   name: cilium
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
 spec:
   controllerName: io.cilium/gateway-controller
