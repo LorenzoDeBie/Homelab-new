@@ -91,13 +91,16 @@ This documentation covers the complete setup and operation of a single-node Kube
 
 | Resource | IP Address | Notes |
 |----------|------------|-------|
-| Talos Node | 192.168.30.50 | Kubernetes control plane + worker |
+| Talos Node (API) | 192.168.30.50 | Kubernetes API endpoint |
+| Talos Node (kubelet) | 192.168.30.51 | Kubelet node IP (for port-forward) |
 | Gateway | 192.168.30.1 | Network gateway |
 | Pi-hole DNS | 192.168.30.45 | Local DNS resolver |
 | Internal Gateway LB | 192.168.30.61 | Gateway API endpoint |
 | Plex LoadBalancer | 192.168.30.62 | Direct Plex access |
 | qBittorrent BT | 192.168.30.63 | BitTorrent traffic |
 | LoadBalancer Pool | 192.168.30.60-80 | Available IPs |
+
+> **Note**: The Talos node has two IP addresses. See [Networking](networking.md#talos-node-ip-configuration) for details on why this is necessary.
 
 ## Domain Quick Reference
 

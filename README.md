@@ -350,13 +350,16 @@ kubernetes/core/authentik/secrets.sops.yaml
 
 ### IP Allocations
 
-| Service | IP |
-|---------|-----|
-| Talos Node | 192.168.30.50 |
-| Internal Gateway | 192.168.30.61 |
-| Plex LoadBalancer | 192.168.30.62 |
-| qBittorrent BT | 192.168.30.63 |
-| Available Pool | 192.168.30.64-80 |
+| Service | IP | Notes |
+|---------|-----|-------|
+| Talos API Endpoint | 192.168.30.50 | Cluster API server |
+| Talos Kubelet | 192.168.30.51 | Node internal IP for kubelet |
+| Internal Gateway | 192.168.30.61 | |
+| Plex LoadBalancer | 192.168.30.62 | |
+| qBittorrent BT | 192.168.30.63 | |
+| Available Pool | 192.168.30.64-80 | |
+
+> **Note:** The Talos node uses two IPs because Talos excludes the cluster endpoint IP from being used as the kubelet's node IP. The secondary IP (192.168.30.51) is configured for the kubelet to enable features like `kubectl port-forward`.
 
 ## Accessing Services
 
@@ -432,3 +435,31 @@ kubectl describe gateway internal-gateway -n kube-system
 # Check HTTPRoutes
 kubectl get httproute -A
 ```
+
+### kubectl port-forward fails with "no preferred addresses found"
+
+This happens when the Talos node has no internal IP registered with Kubernetes. Check node addresses:
+
+```bash
+kubectl get nodes -o wide
+# INTERNAL-IP should show 192.168.30.51, not <none>
+```
+
+If INTERNAL-IP is `<none>`, the issue is that the cluster endpoint IP matches the node IP, and Talos excludes it. The fix requires:
+
+1. A secondary IP on the node for the kubelet (configured in `talos/talconfig.yaml`)
+2. `nodeIP.validSubnets` set to the secondary IP
+
+After applying config changes:
+
+```bash
+# Apply and reboot
+talosctl apply-config -f talos/clusterconfig/homelab-talos-cp01.yaml
+talosctl reboot
+
+# Approve kubelet serving CSRs after reboot
+kubectl get csr
+kubectl certificate approve <csr-name>
+```
+
+See `docs/troubleshooting.md` for detailed diagnosis and fix steps.

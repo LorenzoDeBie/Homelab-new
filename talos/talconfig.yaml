@@ -28,11 +28,16 @@ nodes:
     installDisk: /dev/sda
     controlPlane: true
     networkInterfaces:
+      # Network interface configuration with dual IPs
+      # Primary IP (192.168.30.50) is used for Kubernetes API endpoint
+      # Secondary IP (192.168.30.51) is used for kubelet node IP
+      # This is required because Talos excludes the cluster endpoint IP from kubelet
       - deviceSelector:
           busPath: "0*"  # First network device
         dhcp: false
         addresses:
-          - 192.168.30.50/24
+          - 192.168.30.50/24  # Primary: Kubernetes API endpoint
+          - 192.168.30.51/24  # Secondary: Kubelet node IP (for port-forward, etc.)
         routes:
           - network: 0.0.0.0/0
             gateway: 192.168.30.1
@@ -83,6 +88,12 @@ controlPlane:
         kubelet:
           extraArgs:
             rotate-server-certificates: "true"
+          # Force kubelet to use secondary IP (required for single-node clusters)
+          # Without this, kubelet has no valid node IP since Talos excludes
+          # the cluster endpoint IP (192.168.30.50) from node IP selection
+          nodeIP:
+            validSubnets:
+              - 192.168.30.51/32
           extraMounts:
             # Mount for NFS
             - destination: /var/mnt

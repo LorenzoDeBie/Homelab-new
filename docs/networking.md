@@ -16,6 +16,44 @@ This document provides comprehensive documentation on the networking architectur
 
 ## Network Overview
 
+### Talos Node IP Configuration
+
+In a single-node Talos cluster, special care must be taken when the Kubernetes API endpoint IP matches the node IP. Talos automatically excludes the cluster endpoint IP from being used as the kubelet's node IP, which can cause issues with `kubectl port-forward` and other features that require direct node connectivity.
+
+**The Problem:**
+- Cluster endpoint: `192.168.30.50:6443`
+- Node IP: `192.168.30.50`
+- Talos excludes `192.168.30.50` from kubelet node IP selection
+- kubelet has no valid node IP, causing "no preferred addresses found" errors
+
+**The Solution:**
+Configure a secondary IP address on the network interface and explicitly tell the kubelet to use it:
+
+```yaml
+# In talos/clusterconfig/homelab-talos-cp01.yaml
+machine:
+  kubelet:
+    nodeIP:
+      validSubnets:
+        - 192.168.30.51/32  # Secondary IP for kubelet
+  network:
+    interfaces:
+      - interface: ens18
+        addresses:
+          - 192.168.30.50/24  # Primary IP (cluster endpoint)
+          - 192.168.30.51/24  # Secondary IP (kubelet node IP)
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.30.1
+```
+
+This configuration ensures:
+- `192.168.30.50` is used for the Kubernetes API endpoint
+- `192.168.30.51` is used as the kubelet's node IP
+- `kubectl port-forward` and other node-to-pod communication works correctly
+
+See [Troubleshooting - kubectl port-forward Fails](#kubectl-port-forward-fails) for more details on diagnosing this issue.
+
 ### Network Topology
 
 ```
@@ -64,9 +102,13 @@ This document provides comprehensive documentation on the networking architectur
 | 192.168.30.0/24 | Applications VLAN |
 | 192.168.30.1 | Gateway/Router |
 | 192.168.30.10-49 | Infrastructure devices |
-| 192.168.30.50-59 | Kubernetes nodes |
+| 192.168.30.50 | Kubernetes API endpoint |
+| 192.168.30.51 | Talos node kubelet IP |
+| 192.168.30.52-59 | Reserved for additional nodes |
 | 192.168.30.60-80 | Cilium LoadBalancer pool |
 | 192.168.30.81-254 | DHCP / Other devices |
+
+> **Note**: The Talos node has two IP addresses: `192.168.30.50` (cluster endpoint) and `192.168.30.51` (kubelet node IP). See [Talos Node IP Configuration](#talos-node-ip-configuration) for details.
 
 ### Ports Reference
 

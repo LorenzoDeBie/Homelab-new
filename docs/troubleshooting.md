@@ -497,6 +497,86 @@ argocd app sync <app-name>
 
 ## Talos Issues
 
+### kubectl port-forward Fails with "no preferred addresses found"
+
+**Symptoms**: `kubectl port-forward` fails immediately with error:
+
+```
+error: error upgrading connection: error dialing backend: no preferred addresses found; known addresses: []
+```
+
+**Root Cause**: In a single-node cluster where the Kubernetes API endpoint IP (`192.168.30.50`) matches the node IP, Talos automatically excludes that IP from being used as the kubelet's node IP. This leaves the kubelet without a valid node IP for the SPDY connection that `kubectl port-forward` requires.
+
+**Diagnosis**:
+
+```bash
+# Check node addresses
+kubectl get node talos-cp01 -o jsonpath='{.status.addresses}' | jq .
+
+# Look for InternalIP - if missing or only has hostname, this is the issue
+# Expected output should include an InternalIP like 192.168.30.51
+
+# Check kubelet logs for IP selection issues
+talosctl --nodes 192.168.30.50 logs kubelet | grep -i "node IP"
+```
+
+**Solution**: Configure a secondary IP address and use `nodeIP.validSubnets` to explicitly select it:
+
+1. **Update the Talos configuration** (`talos/clusterconfig/homelab-talos-cp01.yaml`):
+
+   ```yaml
+   machine:
+     kubelet:
+       nodeIP:
+         validSubnets:
+           - 192.168.30.51/32  # Secondary IP for kubelet
+     network:
+       interfaces:
+         - interface: ens18
+           addresses:
+             - 192.168.30.50/24  # Primary IP (cluster endpoint)
+             - 192.168.30.51/24  # Secondary IP (kubelet node IP)
+           routes:
+             - network: 0.0.0.0/0
+               gateway: 192.168.30.1
+   ```
+
+2. **Apply the configuration and reboot**:
+
+   ```bash
+   talosctl --nodes 192.168.30.50 apply-config --file talos/clusterconfig/homelab-talos-cp01.yaml
+   
+   # The node will need a reboot for kubelet certificates to regenerate
+   talosctl --nodes 192.168.30.50 reboot
+   ```
+
+3. **Approve the kubelet serving CSR** (required after IP change):
+
+   ```bash
+   # Wait for node to come back online
+   talosctl --nodes 192.168.30.50 health --wait-timeout 5m
+   
+   # Check for pending CSRs
+   kubectl get csr
+   
+   # Approve any pending kubelet-serving CSRs
+   kubectl get csr | grep Pending | awk '{print $1}' | xargs -I {} kubectl certificate approve {}
+   ```
+
+4. **Verify the fix**:
+
+   ```bash
+   # Check node has the new InternalIP
+   kubectl get node talos-cp01 -o jsonpath='{.status.addresses}' | jq .
+   
+   # Test port-forward
+   kubectl port-forward -n kube-system svc/hubble-ui 12000:80
+   ```
+
+**Why This Works**: By adding a secondary IP (`192.168.30.51`) and configuring `nodeIP.validSubnets` to use only that IP, the kubelet registers with a valid InternalIP that isn't excluded as the cluster endpoint. This allows `kubectl port-forward` to establish the required SPDY connection to the node.
+
+**Reference**: See [Networking - Talos Node IP Configuration](networking.md#talos-node-ip-configuration) for more details on the network architecture.
+
 ### Cannot Connect to Talos API
 
 **Symptoms**: `talosctl` commands fail

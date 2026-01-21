@@ -135,8 +135,14 @@ endpoint: https://192.168.30.50:6443
 nodes:
   - hostname: talos-cp01
     ipAddress: 192.168.30.50
-    # ... network configuration
+    networkInterfaces:
+      - addresses:
+          - 192.168.30.50/24  # Primary: Kubernetes API endpoint
+          - 192.168.30.51/24  # Secondary: Kubelet node IP
+    # ... additional network configuration
 ```
+
+> **Important**: The node requires two IP addresses. The primary IP is used for the Kubernetes API endpoint, while the secondary IP is used as the kubelet's node IP. This is necessary because Talos excludes the cluster endpoint IP from kubelet node IP selection, which would otherwise break `kubectl port-forward`. See [Networking - Talos Node IP Configuration](networking.md#talos-node-ip-configuration) for details.
 
 ### 1.7 Generate Talos Configs
 

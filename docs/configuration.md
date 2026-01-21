@@ -42,7 +42,10 @@ This document provides a comprehensive reference for all configurable values in 
 | 192.168.30.1 | gateway | Network gateway/router | Router |
 | 192.168.30.10 | proxmox | Proxmox host | Proxmox |
 | 192.168.30.45 | pihole | Pi-hole DNS | Proxmox LXC |
-| 192.168.30.50 | talos-cp01 | Talos Kubernetes node | `talos/talconfig.yaml` |
+| 192.168.30.50 | talos-cp01 | Kubernetes API endpoint | `talos/clusterconfig/homelab-talos-cp01.yaml` |
+| 192.168.30.51 | talos-cp01 | Kubelet node IP (secondary) | `talos/clusterconfig/homelab-talos-cp01.yaml` |
+
+> **Note**: The Talos node requires two IP addresses. The primary IP (`192.168.30.50`) is used for the Kubernetes API endpoint, while the secondary IP (`192.168.30.51`) is used as the kubelet's node IP. This is required because Talos excludes the cluster endpoint IP from kubelet node IP selection in single-node clusters. See [Talos Node Network Configuration](#talos-node-network-configuration) for details.
 
 ### Kubernetes LoadBalancer Pool
 
@@ -214,6 +217,65 @@ nodes:
           - network: 0.0.0.0/0
             gateway: 192.168.30.1
         mtu: 1500
+```
+
+### Talos Node Network Configuration
+
+The generated Talos configuration (`talos/clusterconfig/homelab-talos-cp01.yaml`) includes additional network settings required for proper kubelet operation in a single-node cluster:
+
+```yaml
+machine:
+  kubelet:
+    nodeIP:
+      validSubnets:
+        - 192.168.30.51/32  # Explicitly select secondary IP for kubelet
+  network:
+    interfaces:
+      - interface: ens18
+        addresses:
+          - 192.168.30.50/24  # Primary IP - used for Kubernetes API endpoint
+          - 192.168.30.51/24  # Secondary IP - used for kubelet node IP
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.30.1
+```
+
+**Why Two IP Addresses?**
+
+In a single-node Talos cluster, the Kubernetes API endpoint (`192.168.30.50:6443`) typically uses the same IP as the node. Talos automatically excludes this IP from being used as the kubelet's node IP to prevent routing issues.
+
+Without a secondary IP, the kubelet has no valid node IP, which causes:
+- `kubectl port-forward` to fail with "no preferred addresses found"
+- Pod-to-node communication issues
+- Missing `InternalIP` in node status
+
+**Configuration Details:**
+
+| Setting | Value | Purpose |
+|---------|-------|---------|
+| `machine.network.interfaces[].addresses[0]` | `192.168.30.50/24` | Kubernetes API endpoint IP |
+| `machine.network.interfaces[].addresses[1]` | `192.168.30.51/24` | Kubelet node IP |
+| `machine.kubelet.nodeIP.validSubnets` | `192.168.30.51/32` | Forces kubelet to use secondary IP |
+
+**Applying Changes:**
+
+After modifying the Talos node configuration:
+
+```bash
+# Apply the updated configuration
+talosctl --nodes 192.168.30.50 apply-config --file talos/clusterconfig/homelab-talos-cp01.yaml
+
+# Reboot to regenerate kubelet certificates with new IP
+talosctl --nodes 192.168.30.50 reboot
+
+# Wait for node to come back
+talosctl --nodes 192.168.30.50 health --wait-timeout 5m
+
+# Approve pending kubelet serving CSRs
+kubectl get csr | grep Pending | awk '{print $1}' | xargs -I {} kubectl certificate approve {}
+
+# Verify node IP
+kubectl get node talos-cp01 -o jsonpath='{.status.addresses}' | jq .
 ```
 
 ### Important Patches
