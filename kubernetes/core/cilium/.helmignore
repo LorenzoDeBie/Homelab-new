@@ -1,0 +1,2 @@
+# ArgoCD Application - not part of Helm chart
+application.yaml
