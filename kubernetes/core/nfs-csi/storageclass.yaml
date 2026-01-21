@@ -41,7 +41,7 @@ metadata:
   name: media-pv
 spec:
   capacity:
-    storage: 2.5TiB
+    storage: 10Ti
   accessModes:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain

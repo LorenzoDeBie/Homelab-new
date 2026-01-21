@@ -17,9 +17,7 @@ spec:
       valuesObject:
         controller:
           replicas: 1
-        
-        externalSnapshotter:
-          enabled: false  # Disable snapshotter - requires CRDs we don't have installed
+          enableSnapshotter: false  # Disable csi-snapshotter sidecar - requires CRDs we don't have installed
         
         storageClass:
           create: false  # We'll create our own StorageClasses
