@@ -1,11 +1,11 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: cloudflared-secrets
+  name: observability-namespace
   namespace: argocd
   annotations:
-    # Deploy secrets BEFORE the main application (sync-wave 5)
-    argocd.argoproj.io/sync-wave: "1"
+    # Deploy namespace before other observability components
+    argocd.argoproj.io/sync-wave: "-3"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -13,19 +13,14 @@ spec:
   source:
     repoURL: https://github.com/LorenzoDeBie/Homelab-new.git
     targetRevision: main
-    path: kubernetes/core/cloudflared
-    plugin:
-      name: sops-file
-      env:
-        - name: FILE
-          value: credentials.sops.yaml
+    path: kubernetes/observability/namespace
+    directory:
+      include: "namespace.yaml"
   destination:
     server: https://kubernetes.default.svc
-    namespace: cloudflared
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
-      - CreateNamespace=true
       - ServerSideApply=true
