@@ -1,0 +1,11 @@
+# Tailscale namespace with privileged Pod Security policy
+# Required for the subnet router Connector which needs privileged containers
+# for sysctls (net.ipv4.ip_forward) and networking capabilities
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tailscale
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged
