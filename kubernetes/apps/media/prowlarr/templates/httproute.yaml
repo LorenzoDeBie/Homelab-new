@@ -6,7 +6,9 @@ metadata:
   namespace: media
 spec:
   parentRefs:
-    - name: internal-gateway
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: internal-gateway
       namespace: kube-system
   hostnames:
     - prowlarr.int.lorenzodebie.be
@@ -16,5 +18,8 @@ spec:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: prowlarr
+        - group: ""
+          kind: Service
+          name: prowlarr
           port: 9696
+          weight: 1
