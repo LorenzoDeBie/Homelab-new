@@ -13,11 +13,13 @@ argo-cd:
       # ArgoCD URL - required for OIDC redirects
       url: https://argocd.int.lorenzodebie.be
       # OIDC configuration for Authentik
+      # TODO: Remove insecureSkipVerify when Let's Encrypt certs are configured
       oidc.config: |
         name: Authentik
         issuer: https://auth.int.lorenzodebie.be/application/o/argocd/
         clientID: argocd
         clientSecret: $argocd-oidc-secret:oidc.authentik.clientSecret
+        insecureSkipVerify: true
         requestedScopes:
           - openid
           - profile
