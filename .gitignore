@@ -34,3 +34,6 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.bak
+
+# ignore AI plans dir
+.plans/
