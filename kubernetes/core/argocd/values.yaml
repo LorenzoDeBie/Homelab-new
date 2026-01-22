@@ -10,6 +10,19 @@ argo-cd:
       # Run in insecure mode - TLS terminated at ingress/gateway
       server.insecure: true
     cm:
+      # ArgoCD URL - required for OIDC redirects
+      url: https://argocd.int.lorenzodebie.be
+      # OIDC configuration for Authentik
+      oidc.config: |
+        name: Authentik
+        issuer: https://auth.int.lorenzodebie.be/application/o/argocd/
+        clientID: argocd
+        clientSecret: $argocd-oidc-secret:oidc.authentik.clientSecret
+        requestedScopes:
+          - openid
+          - profile
+          - email
+          - groups
       # Enable status badge
       statusbadge.enabled: true
       # Enable exec into pods
@@ -30,6 +43,15 @@ argo-cd:
           end
         end
         return hs
+    # RBAC configuration for Authentik groups
+    rbac:
+      # Map argocd-admins group to admin role
+      policy.csv: |
+        g, argocd-admins, role:admin
+      # No access by default - only mapped groups can access
+      policy.default: ""
+      # Use groups claim from OIDC token for RBAC
+      scopes: "[groups]"
     # SOPS age decryption plugins
     cmp:
       create: true

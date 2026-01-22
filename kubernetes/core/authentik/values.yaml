@@ -36,6 +36,12 @@ authentik:
           secretKeyRef:
             name: authentik-secrets
             key: redis-password
+      # ArgoCD OIDC client secret - used by blueprint via !Env tag
+      - name: ARGOCD_OIDC_CLIENT_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: authentik-secrets
+            key: argocd-oidc-client-secret
   
   server:
     replicas: 1
@@ -43,25 +49,39 @@ authentik:
       enabled: true
       serviceMonitor:
         enabled: false  # Enable after kube-prometheus-stack is deployed
-    # Mount custom blueprints for arr apps proxy providers
+    # Mount custom blueprints
     volumes:
       - name: arr-apps-blueprint
         configMap:
           name: authentik-arr-apps-blueprint
+      - name: argocd-blueprint
+        configMap:
+          name: authentik-argocd-blueprint
     volumeMounts:
       - name: arr-apps-blueprint
-        mountPath: /blueprints/custom
+        mountPath: /blueprints/custom/arr-apps-proxy.yaml
+        subPath: arr-apps-proxy.yaml
+      - name: argocd-blueprint
+        mountPath: /blueprints/custom/argocd-oidc.yaml
+        subPath: argocd-oidc.yaml
   
   worker:
     replicas: 1
-    # Mount custom blueprints for arr apps proxy providers
+    # Mount custom blueprints
     volumes:
       - name: arr-apps-blueprint
         configMap:
           name: authentik-arr-apps-blueprint
+      - name: argocd-blueprint
+        configMap:
+          name: authentik-argocd-blueprint
     volumeMounts:
       - name: arr-apps-blueprint
-        mountPath: /blueprints/custom
+        mountPath: /blueprints/custom/arr-apps-proxy.yaml
+        subPath: arr-apps-proxy.yaml
+      - name: argocd-blueprint
+        mountPath: /blueprints/custom/argocd-oidc.yaml
+        subPath: argocd-oidc.yaml
   
   # Embedded PostgreSQL
   postgresql:
