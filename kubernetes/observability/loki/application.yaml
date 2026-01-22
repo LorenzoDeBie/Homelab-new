@@ -66,6 +66,13 @@ spec:
         gateway:
           enabled: false
         
+        # Disable caches for small cluster (saves ~10GB memory)
+        chunksCache:
+          enabled: false
+        
+        resultsCache:
+          enabled: false
+        
         # Monitoring
         monitoring:
           serviceMonitor:
