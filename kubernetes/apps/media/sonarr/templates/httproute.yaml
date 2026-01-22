@@ -1,4 +1,4 @@
-# HTTPRoute for Sonarr - internal access only
+# HTTPRoute for Sonarr - routed through Authentik for authentication
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -20,6 +20,7 @@ spec:
       backendRefs:
         - group: ""
           kind: Service
-          name: sonarr
-          port: 8989
+          name: authentik-server
+          namespace: authentik
+          port: 80
           weight: 1

@@ -1,4 +1,4 @@
-# HTTPRoute for Radarr - internal access only
+# HTTPRoute for Radarr - routed through Authentik for authentication
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -20,6 +20,7 @@ spec:
       backendRefs:
         - group: ""
           kind: Service
-          name: radarr
-          port: 7878
+          name: authentik-server
+          namespace: authentik
+          port: 80
           weight: 1

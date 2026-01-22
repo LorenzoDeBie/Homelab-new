@@ -31,6 +31,11 @@ authentik:
           secretKeyRef:
             name: authentik-secrets
             key: bootstrap-email
+      - name: AUTHENTIK_REDIS__PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: authentik-secrets
+            key: redis-password
   
   server:
     replicas: 1
@@ -38,9 +43,25 @@ authentik:
       enabled: true
       serviceMonitor:
         enabled: false  # Enable after kube-prometheus-stack is deployed
+    # Mount custom blueprints for arr apps proxy providers
+    volumes:
+      - name: arr-apps-blueprint
+        configMap:
+          name: authentik-arr-apps-blueprint
+    volumeMounts:
+      - name: arr-apps-blueprint
+        mountPath: /blueprints/custom
   
   worker:
     replicas: 1
+    # Mount custom blueprints for arr apps proxy providers
+    volumes:
+      - name: arr-apps-blueprint
+        configMap:
+          name: authentik-arr-apps-blueprint
+    volumeMounts:
+      - name: arr-apps-blueprint
+        mountPath: /blueprints/custom
   
   # Embedded PostgreSQL
   postgresql:
@@ -68,7 +89,9 @@ authentik:
     enabled: true
     architecture: standalone
     auth:
-      enabled: false
+      enabled: true
+      existingSecret: authentik-secrets
+      existingSecretPasswordKey: redis-password
     master:
       persistence:
         enabled: true

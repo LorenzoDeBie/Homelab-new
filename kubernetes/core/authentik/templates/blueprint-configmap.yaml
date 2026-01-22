@@ -1,0 +1,141 @@
+# ConfigMap containing blueprint for arr apps proxy providers
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-arr-apps-blueprint
+  namespace: authentik
+data:
+  arr-apps-proxy.yaml: |
+    # yaml-language-server: $schema=https://goauthentik.io/blueprints/schema.json
+    version: 1
+    metadata:
+      name: Arr Apps Proxy Providers
+      labels:
+        blueprints.goauthentik.io/instantiate: "true"
+    entries:
+      # Create media-users group for access control
+      - model: authentik_core.group
+        id: media-users-group
+        identifiers:
+          name: media-users
+        attrs:
+          is_superuser: false
+
+      # Expression policy to check group membership
+      - model: authentik_policies_expression.expressionpolicy
+        id: media-access-policy
+        identifiers:
+          name: media-apps-access
+        attrs:
+          expression: |
+            return ak_is_group_member(request.user, name="media-users")
+
+      # Sonarr Proxy Provider
+      - model: authentik_providers_proxy.proxyprovider
+        id: sonarr-proxy-provider
+        identifiers:
+          name: sonarr-proxy
+        attrs:
+          external_host: https://sonarr.int.lorenzodebie.be
+          internal_host: http://sonarr.media.svc.cluster.local:8989
+          mode: proxy
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+
+      # Radarr Proxy Provider
+      - model: authentik_providers_proxy.proxyprovider
+        id: radarr-proxy-provider
+        identifiers:
+          name: radarr-proxy
+        attrs:
+          external_host: https://radarr.int.lorenzodebie.be
+          internal_host: http://radarr.media.svc.cluster.local:7878
+          mode: proxy
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+
+      # Prowlarr Proxy Provider
+      - model: authentik_providers_proxy.proxyprovider
+        id: prowlarr-proxy-provider
+        identifiers:
+          name: prowlarr-proxy
+        attrs:
+          external_host: https://prowlarr.int.lorenzodebie.be
+          internal_host: http://prowlarr.media.svc.cluster.local:9696
+          mode: proxy
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+
+      # Sonarr Application
+      - model: authentik_core.application
+        id: sonarr-app
+        identifiers:
+          slug: sonarr
+        attrs:
+          name: Sonarr
+          provider: !KeyOf sonarr-proxy-provider
+          meta_launch_url: https://sonarr.int.lorenzodebie.be
+          policy_engine_mode: any
+
+      # Radarr Application
+      - model: authentik_core.application
+        id: radarr-app
+        identifiers:
+          slug: radarr
+        attrs:
+          name: Radarr
+          provider: !KeyOf radarr-proxy-provider
+          meta_launch_url: https://radarr.int.lorenzodebie.be
+          policy_engine_mode: any
+
+      # Prowlarr Application
+      - model: authentik_core.application
+        id: prowlarr-app
+        identifiers:
+          slug: prowlarr
+        attrs:
+          name: Prowlarr
+          provider: !KeyOf prowlarr-proxy-provider
+          meta_launch_url: https://prowlarr.int.lorenzodebie.be
+          policy_engine_mode: any
+
+      # Policy bindings - bind media-access-policy to each application
+      - model: authentik_policies.policybinding
+        identifiers:
+          target: !KeyOf sonarr-app
+          order: 0
+        attrs:
+          policy: !KeyOf media-access-policy
+          negate: false
+          enabled: true
+          timeout: 30
+
+      - model: authentik_policies.policybinding
+        identifiers:
+          target: !KeyOf radarr-app
+          order: 0
+        attrs:
+          policy: !KeyOf media-access-policy
+          negate: false
+          enabled: true
+          timeout: 30
+
+      - model: authentik_policies.policybinding
+        identifiers:
+          target: !KeyOf prowlarr-app
+          order: 0
+        attrs:
+          policy: !KeyOf media-access-policy
+          negate: false
+          enabled: true
+          timeout: 30
+
+      # Update embedded outpost to include these applications
+      - model: authentik_outposts.outpost
+        identifiers:
+          name: authentik Embedded Outpost
+        attrs:
+          type: proxy
+          providers:
+            - !KeyOf sonarr-proxy-provider
+            - !KeyOf radarr-proxy-provider
+            - !KeyOf prowlarr-proxy-provider
+          config:
+            authentik_host: https://auth.int.lorenzodebie.be
