@@ -5,6 +5,7 @@ namespace: argocd
 
 resources:
   - namespace.yaml
+  - httproute.yaml
 
 # ArgoCD is installed via Helm during bootstrap
 # This kustomization is for additional resources
