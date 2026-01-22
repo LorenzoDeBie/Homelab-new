@@ -8,8 +8,8 @@ app-template:
             tag: latest
           env:
             TZ: Europe/Brussels
-            PUID: "1000"
-            PGID: "1000"
+            PUID: "3001"
+            PGID: "3001"
             WEBUI_PORT: &port 8080
             TORRENTING_PORT: &btport 50413
           resources:
