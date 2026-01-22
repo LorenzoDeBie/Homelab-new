@@ -20,6 +20,7 @@ spec:
       backendRefs:
         - group: ""
           kind: Service
-          name: qbittorrent-app
-          port: 8080
+          name: authentik-server
+          namespace: authentik
+          port: 80
           weight: 1
