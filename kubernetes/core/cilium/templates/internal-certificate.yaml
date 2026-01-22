@@ -1,5 +1,66 @@
 # Wildcard certificate for internal services
-# Uses Let's Encrypt with Cloudflare DNS challenge
+# TEMPORARY: Using self-signed certificate until Cloudflare DNS migration is complete
+# TODO: Switch back to Let's Encrypt once DNS is migrated
+---
+# Self-signed ClusterIssuer for temporary use
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-issuer
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+spec:
+  selfSigned: {}
+---
+# Self-signed CA certificate
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: internal-ca
+  namespace: kube-system
+  annotations:
+    argocd.argoproj.io/sync-wave: "-4"
+spec:
+  isCA: true
+  commonName: internal-ca
+  secretName: internal-ca-secret
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: selfsigned-issuer
+    kind: ClusterIssuer
+---
+# CA Issuer using the self-signed CA
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: internal-ca-issuer
+  namespace: kube-system
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+spec:
+  ca:
+    secretName: internal-ca-secret
+---
+# Wildcard certificate signed by the internal CA
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: internal-wildcard-tls
+  namespace: kube-system
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  secretName: internal-wildcard-tls
+  issuerRef:
+    name: internal-ca-issuer
+    kind: Issuer
+  dnsNames:
+    - "*.int.lorenzodebie.be"
+    - "int.lorenzodebie.be"
+
+# Original Let's Encrypt configuration (uncomment after Cloudflare DNS migration):
 # apiVersion: cert-manager.io/v1
 # kind: Certificate
 # metadata:
