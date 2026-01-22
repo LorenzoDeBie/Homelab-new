@@ -609,11 +609,70 @@ spec:
 
 The service will be accessible at `my-service.tailnet-name.ts.net`.
 
+### Subnet Router Configuration
+
+The Tailscale Operator deploys a Connector that acts as a subnet router, advertising 
+the homelab network (`192.168.30.0/24`) to your Tailnet.
+
+**What this enables:**
+- Access all internal services from any Tailscale-connected device
+- Use existing `*.int.lorenzodebie.be` domains from remote locations
+- No need to expose individual services to the internet
+
+**Remote Access Setup:**
+
+1. Connect to Tailscale on your device
+2. Configure DNS (choose one):
+   - **Option A (Recommended)**: Configure Tailscale DNS to use Pi-hole for `int.lorenzodebie.be`
+   - **Option B**: Manually set your device DNS to `192.168.30.45` when on Tailscale
+3. Access services normally: `https://grafana.int.lorenzodebie.be`
+
+**Tailscale Admin Console Configuration:**
+
+Before the subnet router works, you need to configure ACL tags and auto-approvers in the 
+[Tailscale Admin Console](https://login.tailscale.com/admin/):
+
+1. Navigate to **Access Controls** and add the following to your ACL policy:
+
+```json
+{
+  "tagOwners": {
+    "tag:k8s-operator": [],
+    "tag:k8s": ["tag:k8s-operator"],
+    "tag:k8s-subnet": ["tag:k8s-operator"]
+  },
+  "autoApprovers": {
+    "routes": {
+      "192.168.30.0/24": ["tag:k8s-subnet"]
+    }
+  }
+}
+```
+
+2. (Optional) Configure Tailscale DNS for seamless resolution:
+   - Navigate to **DNS** in the admin console
+   - Add a nameserver: `192.168.30.45` (Pi-hole)
+   - Restrict to domain: `int.lorenzodebie.be`
+
+**Verify Subnet Router:**
+
+```bash
+# Check Connector status
+kubectl get connector homelab-subnet-router
+
+# Check subnet router pod
+kubectl get pods -n tailscale -l tailscale.com/parent-resource=homelab-subnet-router
+
+# In Tailscale admin console, verify:
+# - Device "homelab-subnet-0" appears in Machines tab
+# - Route "192.168.30.0/24" is approved
+```
+
 ### Access via Tailscale
 
 1. Connect to Tailscale on your device
 2. Access services via their Tailscale hostname or IP
-3. Alternatively, access via internal Gateway (192.168.30.61) if routing is configured
+3. Alternatively, access via internal Gateway (192.168.30.61) using the subnet router
 
 ### Verify Tailscale
 

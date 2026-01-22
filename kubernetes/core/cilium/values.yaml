@@ -58,6 +58,12 @@ cilium:
   operator:
     replicas: 1
 
+  # Required for Tailscale Connector subnet routing
+  # When Cilium replaces kube-proxy, socket LB bypass is needed
+  # so Tailscale firewall rules (netfilter) work correctly
+  socketLB:
+    hostNamespaceOnly: true
+
   # BGP (optional, for advanced routing)
   bgpControlPlane:
     enabled: false

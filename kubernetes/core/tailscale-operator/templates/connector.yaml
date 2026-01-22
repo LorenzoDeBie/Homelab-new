@@ -1,0 +1,16 @@
+# Tailscale Connector - Subnet Router for homelab network
+# This advertises 192.168.30.0/24 to the Tailnet, allowing remote
+# access to all internal services when connected via Tailscale
+apiVersion: tailscale.com/v1alpha1
+kind: Connector
+metadata:
+  name: homelab-subnet-router
+spec:
+  # Hostname shown in Tailscale admin console (becomes homelab-subnet-0)
+  hostname: homelab-subnet
+  # Tag for ACL matching and auto-approval
+  tags:
+    - tag:k8s-subnet
+  subnetRouter:
+    advertiseRoutes:
+      - "192.168.30.0/24"

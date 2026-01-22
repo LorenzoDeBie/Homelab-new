@@ -1,0 +1,6 @@
+# ArgoCD Application files
+application.yaml
+*-application.yaml
+
+# SOPS encrypted secrets (handled by separate ArgoCD App)
+*.sops.yaml

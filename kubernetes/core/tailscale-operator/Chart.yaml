@@ -1,0 +1,11 @@
+apiVersion: v2
+name: tailscale-operator-umbrella
+description: Tailscale Operator with subnet router Connector
+type: application
+version: 1.0.0
+appVersion: "1.92.5"
+
+dependencies:
+  - name: tailscale-operator
+    version: "1.92.5"
+    repository: https://pkgs.tailscale.com/helmcharts
