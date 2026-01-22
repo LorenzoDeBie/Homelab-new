@@ -20,6 +20,16 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
+  # Ignore status fields that have undeclared schema fields
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jqPathExpressions:
+        - .status
+    - group: apps
+      kind: StatefulSet
+      jqPathExpressions:
+        - .status
   syncPolicy:
     automated:
       prune: true
@@ -27,3 +37,4 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+      - RespectIgnoreDifferences=true
