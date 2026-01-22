@@ -7,10 +7,11 @@ metadata:
   annotations:
     # Deploy after Certificate (sync-wave 0) to ensure TLS secret exists
     argocd.argoproj.io/sync-wave: "1"
-    # Use Cilium as the Gateway implementation
-    io.cilium/lb-ipam-ips: "192.168.30.61"
 spec:
   gatewayClassName: cilium
+  infrastructure:
+    annotations:
+      io.cilium/lb-ipam-ips: "192.168.30.61"
   listeners:
     - name: http
       port: 80
