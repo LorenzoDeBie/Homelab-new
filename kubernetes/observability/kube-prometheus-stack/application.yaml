@@ -63,6 +63,16 @@ spec:
             userKey: admin-user
             passwordKey: admin-password
           
+          # Disable init-chown-data container - chown fails on NFS with Mapall
+          initChownData:
+            enabled: false
+          
+          # Run as UID/GID 3001 (media user) to match NFS Mapall setting
+          securityContext:
+            runAsUser: 3001
+            runAsGroup: 3001
+            fsGroup: 3001
+          
           persistence:
             enabled: true
             storageClassName: nfs-config
