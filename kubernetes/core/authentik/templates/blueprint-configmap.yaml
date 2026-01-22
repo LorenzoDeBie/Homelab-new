@@ -40,6 +40,7 @@ data:
           internal_host: http://sonarr.media.svc.cluster.local:8989
           mode: proxy
           authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
 
       # Radarr Proxy Provider
       - model: authentik_providers_proxy.proxyprovider
@@ -51,6 +52,7 @@ data:
           internal_host: http://radarr.media.svc.cluster.local:7878
           mode: proxy
           authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
 
       # Prowlarr Proxy Provider
       - model: authentik_providers_proxy.proxyprovider
@@ -62,6 +64,7 @@ data:
           internal_host: http://prowlarr.media.svc.cluster.local:9696
           mode: proxy
           authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
 
       # Sonarr Application
       - model: authentik_core.application
