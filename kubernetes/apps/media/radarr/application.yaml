@@ -8,64 +8,12 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://bjw-s-labs.github.io/helm-charts
-    chart: app-template
-    targetRevision: 4.6.2
+    repoURL: https://github.com/LorenzoDeBie/Homelab-new.git
+    targetRevision: main
+    path: kubernetes/apps/media/radarr
     helm:
-      valuesObject:
-        controllers:
-          radarr:
-            containers:
-              app:
-                image:
-                  repository: lscr.io/linuxserver/radarr
-                  tag: latest
-                env:
-                  TZ: Europe/Brussels
-                  PUID: "1000"
-                  PGID: "1000"
-                resources:
-                  requests:
-                    cpu: 50m
-                    memory: 256Mi
-                  limits:
-                    memory: 1Gi
-                probes:
-                  liveness:
-                    enabled: true
-                  readiness:
-                    enabled: true
-                  startup:
-                    enabled: true
-                    spec:
-                      failureThreshold: 30
-                      periodSeconds: 5
-        
-        service:
-          app:
-            controller: radarr
-            ports:
-              http:
-                port: 7878
-        
-        persistence:
-          config:
-            enabled: true
-            type: persistentVolumeClaim
-            storageClass: nfs-config
-            accessMode: ReadWriteOnce
-            size: 5Gi
-          
-          # Shared media volume for hardlink support
-          # Configure in Radarr UI:
-          #   Root Folder: /media/media/movies
-          #   Download Client Remote Path: /media/torrents
-          media:
-            enabled: true
-            type: persistentVolumeClaim
-            existingClaim: media
-            globalMounts:
-              - path: /media
+      valueFiles:
+        - values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: media

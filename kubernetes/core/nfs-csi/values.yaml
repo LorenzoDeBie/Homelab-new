@@ -1,0 +1,7 @@
+csi-driver-nfs:
+  controller:
+    replicas: 1
+    enableSnapshotter: false  # Disable csi-snapshotter sidecar - requires CRDs we don't have installed
+  
+  storageClass:
+    create: false  # We'll create our own StorageClasses

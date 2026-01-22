@@ -1,0 +1,11 @@
+apiVersion: v2
+name: nfs-csi-umbrella
+description: NFS CSI Driver with StorageClasses and PVs
+type: application
+version: 1.0.0
+appVersion: "4.12.1"
+
+dependencies:
+  - name: csi-driver-nfs
+    version: v4.12.1
+    repository: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts

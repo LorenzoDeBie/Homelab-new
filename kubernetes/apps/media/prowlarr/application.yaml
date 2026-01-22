@@ -8,53 +8,12 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://bjw-s-labs.github.io/helm-charts
-    chart: app-template
-    targetRevision: 4.6.2
+    repoURL: https://github.com/LorenzoDeBie/Homelab-new.git
+    targetRevision: main
+    path: kubernetes/apps/media/prowlarr
     helm:
-      valuesObject:
-        controllers:
-          prowlarr:
-            containers:
-              app:
-                image:
-                  repository: lscr.io/linuxserver/prowlarr
-                  tag: latest
-                env:
-                  TZ: Europe/Brussels
-                  PUID: "1000"
-                  PGID: "1000"
-                resources:
-                  requests:
-                    cpu: 50m
-                    memory: 128Mi
-                  limits:
-                    memory: 512Mi
-                probes:
-                  liveness:
-                    enabled: true
-                  readiness:
-                    enabled: true
-                  startup:
-                    enabled: true
-                    spec:
-                      failureThreshold: 30
-                      periodSeconds: 5
-        
-        service:
-          app:
-            controller: prowlarr
-            ports:
-              http:
-                port: 9696
-        
-        persistence:
-          config:
-            enabled: true
-            type: persistentVolumeClaim
-            storageClass: nfs-config
-            accessMode: ReadWriteOnce
-            size: 1Gi
+      valueFiles:
+        - values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: media

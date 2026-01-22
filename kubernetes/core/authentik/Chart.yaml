@@ -1,0 +1,11 @@
+apiVersion: v2
+name: authentik-umbrella
+description: Authentik identity provider with HTTPRoute for internal access
+type: application
+version: 1.0.0
+appVersion: "2025.12.1"
+
+dependencies:
+  - name: authentik
+    version: 2025.12.1
+    repository: https://charts.goauthentik.io

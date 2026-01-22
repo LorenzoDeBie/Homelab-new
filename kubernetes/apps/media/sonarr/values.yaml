@@ -1,0 +1,54 @@
+app-template:
+  controllers:
+    sonarr:
+      containers:
+        app:
+          image:
+            repository: lscr.io/linuxserver/sonarr
+            tag: latest
+          env:
+            TZ: Europe/Brussels
+            PUID: "1000"
+            PGID: "1000"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
+            startup:
+              enabled: true
+              spec:
+                failureThreshold: 30
+                periodSeconds: 5
+  
+  service:
+    app:
+      controller: sonarr
+      ports:
+        http:
+          port: 8989
+  
+  persistence:
+    config:
+      enabled: true
+      type: persistentVolumeClaim
+      storageClass: nfs-config
+      accessMode: ReadWriteOnce
+      size: 5Gi
+    
+    # Shared media volume for hardlink support
+    # Configure in Sonarr UI:
+    #   Root Folder: /media/media/tv
+    #   Download Client Remote Path: /media/torrents
+    media:
+      enabled: true
+      type: persistentVolumeClaim
+      existingClaim: media
+      globalMounts:
+        - path: /media
