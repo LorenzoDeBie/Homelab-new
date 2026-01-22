@@ -22,4 +22,5 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      # SSA required for Gateway API CRDs per official documentation
       - ServerSideApply=true

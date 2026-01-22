@@ -19,10 +19,23 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
+  # Ignore .status fields that have undeclared schema fields (terminatingReplicas)
+  # Required when using SSA for CNI with many CRDs
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jqPathExpressions:
+        - .status
+    - group: apps
+      kind: DaemonSet
+      jqPathExpressions:
+        - .status
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      # SSA recommended for Cilium's many CRDs
       - ServerSideApply=true
+      - RespectIgnoreDifferences=true

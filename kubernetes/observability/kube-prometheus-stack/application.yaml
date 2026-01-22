@@ -19,10 +19,27 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: observability
+  # Ignore .status fields that have undeclared schema fields (terminatingReplicas)
+  # Required when using SSA for large CRDs
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jqPathExpressions:
+        - .status
+    - group: apps
+      kind: StatefulSet
+      jqPathExpressions:
+        - .status
+    - group: apps
+      kind: DaemonSet
+      jqPathExpressions:
+        - .status
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      # SSA needed for large Prometheus CRDs and Grafana dashboards
       - ServerSideApply=true
+      - RespectIgnoreDifferences=true
