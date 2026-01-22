@@ -19,18 +19,18 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
-    - name: https
-      port: 443
-      protocol: HTTPS
-      hostname: "*.int.lorenzodebie.be"
-      allowedRoutes:
-        namespaces:
-          from: All
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - name: internal-wildcard-tls
-            namespace: kube-system
+    # - name: https
+    #   port: 443
+    #   protocol: HTTPS
+    #   hostname: "*.int.lorenzodebie.be"
+    #   allowedRoutes:
+    #     namespaces:
+    #       from: All
+    #   tls:
+    #     mode: Terminate
+    #     certificateRefs:
+    #       - name: internal-wildcard-tls
+    #         namespace: kube-system
 ---
 # GatewayClass for Cilium - must be created before Gateway
 apiVersion: gateway.networking.k8s.io/v1
