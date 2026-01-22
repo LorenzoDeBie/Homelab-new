@@ -5,9 +5,15 @@ namespace: argocd
 
 resources:
   - namespace.yaml
-  - httproute.yaml
 
-# ArgoCD is installed via Helm during bootstrap
-# This kustomization is for additional resources
-
-# After initial install, ArgoCD manages itself via the core/argocd Application
+# Bootstrap resources for initial ArgoCD installation
+# 
+# Initial bootstrap steps (run from repo root):
+# 1. Create namespace: kubectl apply -f kubernetes/bootstrap/argocd/namespace.yaml
+# 2. Create SOPS secret: kubectl create secret generic sops-age -n argocd --from-file=keys.txt=age.key
+# 3. Add Helm repo: helm repo add argo https://argoproj.github.io/argo-helm
+# 4. Install ArgoCD via Helm: helm install argocd argo/argo-cd -n argocd -f kubernetes/bootstrap/argocd/values.yaml
+# 5. Wait for ArgoCD to be ready: kubectl wait --for=condition=available deployment/argocd-server -n argocd --timeout=300s
+# 6. Apply the ArgoCD Application for self-management: kubectl apply -f kubernetes/core/argocd/application.yaml
+#
+# After bootstrap, ArgoCD manages itself via kubernetes/core/argocd (Helm umbrella chart)

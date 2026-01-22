@@ -1,0 +1,165 @@
+# ArgoCD Helm umbrella chart values
+# Subchart: argo-cd (https://argoproj.github.io/argo-helm)
+
+argo-cd:
+  global:
+    domain: argocd.int.lorenzodebie.be
+
+  configs:
+    params:
+      # Run in insecure mode - TLS terminated at ingress/gateway
+      server.insecure: true
+    cm:
+      # Enable status badge
+      statusbadge.enabled: true
+      # Enable exec into pods
+      exec.enabled: true
+      # Kustomize with Helm support
+      kustomize.buildOptions: --enable-helm
+      # Resource tracking
+      resource.customizations.health.argoproj.io_Application: |
+        hs = {}
+        hs.status = "Progressing"
+        hs.message = ""
+        if obj.status ~= nil then
+          if obj.status.health ~= nil then
+            hs.status = obj.status.health.status
+            if obj.status.health.message ~= nil then
+              hs.message = obj.status.health.message
+            end
+          end
+        end
+        return hs
+    # SOPS age decryption plugins
+    cmp:
+      create: true
+      plugins:
+        # Plugin for single SOPS files (auto-discovered)
+        sops:
+          allowConcurrency: true
+          discover:
+            fileName: "*.sops.yaml"
+          generate:
+            command:
+              - sh
+              - "-c"
+              - |
+                sops --decrypt "$ARGOCD_ENV_FILE"
+          lockRepo: false
+        # Plugin for explicit SOPS file (specified via FILE env var in Application)
+        # ArgoCD passes Application env vars with ARGOCD_ENV_ prefix
+        # So FILE becomes ARGOCD_ENV_FILE
+        sops-file:
+          allowConcurrency: true
+          generate:
+            command:
+              - sh
+              - "-c"
+              - |
+                sops --decrypt "$ARGOCD_ENV_FILE"
+          lockRepo: false
+
+  repoServer:
+    # Mount SOPS age key and plugin config
+    volumes:
+      - name: sops-age
+        secret:
+          secretName: sops-age
+      - name: custom-tools
+        emptyDir: {}
+      - name: cmp-plugin
+        configMap:
+          name: argocd-cmp-cm
+      - name: cmp-tmp
+        emptyDir: {}
+    volumeMounts:
+      - name: sops-age
+        mountPath: /home/argocd/.config/sops/age
+      - name: custom-tools
+        mountPath: /usr/local/bin/sops
+        subPath: sops
+    
+    # Install SOPS binary
+    initContainers:
+      - name: install-sops
+        image: alpine:latest
+        command:
+          - sh
+          - -c
+          - |
+            wget -qO /custom-tools/sops https://github.com/getsops/sops/releases/download/v3.11.0/sops-v3.11.0.linux.amd64
+            chmod +x /custom-tools/sops
+        volumeMounts:
+          - name: custom-tools
+            mountPath: /custom-tools
+    
+    # CMP sidecar container for SOPS plugin
+    extraContainers:
+      - name: sops-plugin
+        # Use argocd image which has argocd-cmp-server
+        image: quay.io/argoproj/argocd:v2.14.11
+        command:
+          - /var/run/argocd/argocd-cmp-server
+        env:
+          - name: SOPS_AGE_KEY_FILE
+            value: /home/argocd/.config/sops/age/keys.txt
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 999
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+          - name: var-files
+            mountPath: /var/run/argocd
+          - name: plugins
+            mountPath: /home/argocd/cmp-server/plugins
+          - name: cmp-plugin
+            mountPath: /home/argocd/cmp-server/config/plugin.yaml
+            subPath: sops-file.yaml
+          - name: cmp-tmp
+            mountPath: /tmp
+          - name: sops-age
+            mountPath: /home/argocd/.config/sops/age
+          - name: custom-tools
+            mountPath: /usr/local/bin/sops
+            subPath: sops
+    
+    env:
+      - name: SOPS_AGE_KEY_FILE
+        value: /home/argocd/.config/sops/age/keys.txt
+
+  server:
+    # Metrics for Prometheus
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: false  # Enable after kube-prometheus-stack is deployed
+
+  controller:
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: false  # Enable after kube-prometheus-stack is deployed
+
+  redis:
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: false  # Enable after kube-prometheus-stack is deployed
+
+  applicationSet:
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: false  # Enable after kube-prometheus-stack is deployed
+
+  notifications:
+    enabled: true
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: false  # Enable after kube-prometheus-stack is deployed

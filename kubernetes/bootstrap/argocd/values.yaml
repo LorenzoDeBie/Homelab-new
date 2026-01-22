@@ -1,5 +1,6 @@
-# ArgoCD Helm values
-# Chart: argo/argo-cd
+# ArgoCD Helm values for initial bootstrap installation
+# This file is used for direct helm install (without umbrella chart prefix)
+# After bootstrap, ArgoCD manages itself via kubernetes/core/argocd
 
 global:
   domain: argocd.int.lorenzodebie.be
@@ -96,7 +97,7 @@ repoServer:
   extraContainers:
     - name: sops-plugin
       # Use argocd image which has argocd-cmp-server
-      image: quay.io/argoproj/argocd:v2.14.5
+      image: quay.io/argoproj/argocd:v2.14.11
       command:
         - /var/run/argocd/argocd-cmp-server
       env:

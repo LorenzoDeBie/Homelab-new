@@ -1,0 +1,11 @@
+apiVersion: v2
+name: argocd-umbrella
+description: ArgoCD GitOps controller with SOPS support for self-management
+type: application
+version: 1.0.0
+appVersion: "v2.14.11"
+
+dependencies:
+  - name: argo-cd
+    version: 7.9.1
+    repository: https://argoproj.github.io/argo-helm
