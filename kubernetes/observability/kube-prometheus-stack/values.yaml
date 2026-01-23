@@ -162,8 +162,8 @@ kube-prometheus-stack:
   # Prometheus configuration
   prometheus:
     prometheusSpec:
-      retention: 30d
-      retentionSize: 50GB
+      retention: 15d
+      retentionSize: 20GB
       
       storageSpec:
         volumeClaimTemplate:
@@ -173,7 +173,7 @@ kube-prometheus-stack:
               - ReadWriteOnce
             resources:
               requests:
-                storage: 50Gi
+                storage: 20Gi
       
       # Scrape all ServiceMonitors
       serviceMonitorSelectorNilUsesHelmValues: false

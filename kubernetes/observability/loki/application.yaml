@@ -35,8 +35,12 @@ spec:
                   prefix: loki_index_
                   period: 24h
           
+          compactor:
+            retention_enabled: true
+            delete_request_store: filesystem
+          
           limits_config:
-            retention_period: 30d
+            retention_period: 7d
             ingestion_rate_mb: 10
             ingestion_burst_size_mb: 20
         
@@ -45,7 +49,7 @@ spec:
           persistence:
             enabled: true
             storageClass: nfs-config
-            size: 50Gi
+            size: 10Gi
           
           resources:
             requests:
