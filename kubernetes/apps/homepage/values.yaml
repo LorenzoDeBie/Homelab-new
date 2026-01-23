@@ -3,6 +3,18 @@ app-template:
     homepage:
       serviceAccount:
         identifier: homepage
+      initContainers:
+        copy-config:
+          image:
+            repository: busybox
+            tag: latest
+          command:
+            - sh
+            - -c
+            - |
+              cp /config-source/*.yaml /app/config/
+              cp /config-source/*.css /app/config/ 2>/dev/null || true
+              cp /config-source/*.js /app/config/ 2>/dev/null || true
       containers:
         app:
           image:
@@ -46,10 +58,18 @@ app-template:
   persistence:
     config:
       enabled: true
-      type: configMap
-      identifier: config
+      type: emptyDir
       globalMounts:
         - path: /app/config
+    config-source:
+      enabled: true
+      type: configMap
+      identifier: config
+      advancedMounts:
+        homepage:
+          copy-config:
+            - path: /config-source
+              readOnly: true
 
   configMaps:
     config:
@@ -173,3 +193,7 @@ app-template:
 
         kubernetes.yaml: |
           mode: cluster
+
+        custom.css: ""
+
+        custom.js: ""
