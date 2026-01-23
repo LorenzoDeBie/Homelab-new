@@ -82,7 +82,7 @@ repoServer:
   # Install SOPS binary
   initContainers:
     - name: install-sops
-      image: alpine:3.22
+      image: alpine:3.22@sha256:4b7ce07002c69e8f3d704a9c5d6fd3053be500b7f1c69fc0d80990c2ad8dd412
       command:
         - sh
         - -c
@@ -97,7 +97,7 @@ repoServer:
   extraContainers:
     - name: sops-plugin
       # Use argocd image which has argocd-cmp-server
-      image: quay.io/argoproj/argocd:v2.14.11
+      image: quay.io/argoproj/argocd:v2.14.11@sha256:5fc69e31c755fc0209c6eb66f6280ece558990bfb77704795e0e939b6bb6f434
       command:
         - /var/run/argocd/argocd-cmp-server
       env:
