@@ -8,76 +8,12 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://bjw-s-labs.github.io/helm-charts
-    chart: app-template
-    targetRevision: 4.6.2
+    repoURL: https://github.com/LorenzoDeBie/Homelab-new.git
+    targetRevision: main
+    path: kubernetes/apps/media/plex
     helm:
-      valuesObject:
-        controllers:
-          plex:
-            containers:
-              app:
-                image:
-                  repository: lscr.io/linuxserver/plex
-                  tag: latest
-                env:
-                  TZ: Europe/Brussels
-                  PUID: "1000"
-                  PGID: "1000"
-                  VERSION: docker
-                  PLEX_CLAIM: ""
-                resources:
-                  requests:
-                    cpu: 100m
-                    memory: 1Gi
-                  limits:
-                    memory: 8Gi
-                probes:
-                  liveness:
-                    enabled: true
-                  readiness:
-                    enabled: true
-                  startup:
-                    enabled: true
-                    spec:
-                      failureThreshold: 30
-                      periodSeconds: 5
-        
-        service:
-          app:
-            controller: plex
-            type: LoadBalancer
-            annotations:
-              io.cilium/lb-ipam-ips: "192.168.30.62"
-            ports:
-              http:
-                port: 32400
-        
-        persistence:
-          config:
-            enabled: true
-            type: persistentVolumeClaim
-            storageClass: nfs-config
-            accessMode: ReadWriteOnce
-            size: 50Gi
-          
-          # Shared media volume (read-only for Plex)
-          # Configure in Plex UI:
-          #   TV Library: /media/media/tv
-          #   Movies Library: /media/media/movies
-          media:
-            enabled: true
-            type: persistentVolumeClaim
-            existingClaim: media
-            globalMounts:
-              - path: /media
-                readOnly: true
-          
-          transcode:
-            enabled: true
-            type: emptyDir
-            globalMounts:
-              - path: /transcode
+      valueFiles:
+        - values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: media
@@ -87,3 +23,4 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true

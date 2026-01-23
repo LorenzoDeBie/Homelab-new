@@ -1,0 +1,25 @@
+# HTTPRoute for Plex - internal access
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: plex
+  namespace: media
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: internal-gateway
+      namespace: kube-system
+  hostnames:
+    - plex.int.lorenzodebie.be
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - group: ""
+          kind: Service
+          name: plex
+          port: 32400
+          weight: 1

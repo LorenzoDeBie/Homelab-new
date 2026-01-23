@@ -1,0 +1,66 @@
+app-template:
+  controllers:
+    plex:
+      containers:
+        app:
+          image:
+            repository: lscr.io/linuxserver/plex
+            tag: latest
+          env:
+            TZ: Europe/Brussels
+            PUID: "3001"
+            PGID: "3001"
+            VERSION: docker
+            PLEX_CLAIM: ""
+          resources:
+            requests:
+              cpu: 100m
+              memory: 1Gi
+            limits:
+              memory: 8Gi
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
+            startup:
+              enabled: true
+              spec:
+                failureThreshold: 30
+                periodSeconds: 5
+  
+  service:
+    app:
+      controller: plex
+      type: LoadBalancer
+      # annotations:
+      #   io.cilium/lb-ipam-ips: "192.168.30.62"
+      ports:
+        http:
+          port: 32400
+  
+  persistence:
+    config:
+      enabled: true
+      type: persistentVolumeClaim
+      storageClass: nfs-config
+      accessMode: ReadWriteOnce
+      size: 50Gi
+    
+    # Shared media volume (read-only for Plex)
+    # Configure in Plex UI:
+    #   TV Library: /media/media/tv
+    #   Movies Library: /media/media/movies
+    media:
+      enabled: true
+      type: persistentVolumeClaim
+      existingClaim: media
+      globalMounts:
+        - path: /media
+          readOnly: true
+    
+    transcode:
+      enabled: true
+      type: emptyDir
+      globalMounts:
+        - path: /transcode
