@@ -7,7 +7,7 @@ app-template:
         copy-config:
           image:
             repository: busybox
-            tag: latest
+            tag: latest@sha256:e226d6308690dbe282443c8c7e57365c96b5228f0fe7f40731b5d84d37a06839
           command:
             - sh
             - -c
@@ -19,7 +19,7 @@ app-template:
         app:
           image:
             repository: ghcr.io/gethomepage/homepage
-            tag: latest
+            tag: latest@sha256:7fa7b07a26bd8d90a44bb975c6455b10d8dee467ce674b040750ffb4a0f486d6
           env:
             TZ: Europe/Brussels
             HOMEPAGE_ALLOWED_HOSTS: home.int.lorenzodebie.be
