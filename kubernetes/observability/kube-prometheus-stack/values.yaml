@@ -264,7 +264,7 @@ kube-prometheus-stack:
         - name: 'telegram'
           telegram_configs:
             - bot_token_file: /etc/alertmanager/secrets/alertmanager-telegram/bot-token
-              chat_id: "8472055654"  
+              chat_id: 8472055654  
               send_resolved: true
               parse_mode: HTML
               message: |-
