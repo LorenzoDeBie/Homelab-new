@@ -275,7 +275,7 @@ kube-prometheus-stack:
                 {{ if .Annotations.summary }}{{ .Annotations.summary }}{{ end }}
                 {{ if .Annotations.description }}
                 <i>Details:</i> {{ .Annotations.description }}{{ end }}
-                <i>Severity:</i> {{ .Labels.severity | default "unknown" }}
+                <i>Severity:</i> {{ if .Labels.severity }}{{ .Labels.severity }}{{ else }}unknown{{ end }}
                 {{ if .Labels.namespace }}<i>Namespace:</i> {{ .Labels.namespace }}{{ end }}
                 {{ if .Labels.pod }}<i>Pod:</i> {{ .Labels.pod }}{{ end }}
                 {{ end }}
