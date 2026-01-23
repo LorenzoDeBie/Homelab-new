@@ -107,6 +107,69 @@ kube-prometheus-stack:
         url: http://loki.observability.svc.cluster.local:3100
         access: proxy
         isDefault: false
+    
+    # Dashboard providers for custom folders
+    dashboardProviders:
+      dashboardproviders.yaml:
+        apiVersion: 1
+        providers:
+          - name: 'grafana-dashboards-custom'
+            orgId: 1
+            folder: 'Custom'
+            type: file
+            disableDeletion: false
+            editable: true
+            options:
+              path: /var/lib/grafana/dashboards/grafana-dashboards-custom
+    
+    # Custom dashboards from grafana.com
+    dashboards:
+      grafana-dashboards-custom:
+        # Node Exporter Full - Detailed node hardware metrics
+        node-exporter-full:
+          gnetId: 1860
+          revision: 37
+          datasource: Prometheus
+        
+        # Loki Logs - Log exploration dashboard
+        loki-logs:
+          gnetId: 13639
+          revision: 2
+          datasource: Loki
+        
+        # Loki & Promtail - Promtail health and log rates
+        loki-promtail:
+          gnetId: 10880
+          revision: 1
+          datasource: Prometheus
+        
+        # Cilium Agent Metrics - CNI agent monitoring
+        # Note: Requires Cilium prometheus.serviceMonitor.enabled=true
+        cilium-agent:
+          gnetId: 16611
+          revision: 1
+          datasource: Prometheus
+        
+        # Cilium Operator Metrics - Cilium operator monitoring
+        # Note: Requires Cilium prometheus.serviceMonitor.enabled=true
+        cilium-operator:
+          gnetId: 16612
+          revision: 1
+          datasource: Prometheus
+        
+        # ArgoCD - GitOps application sync status
+        # Note: Requires ArgoCD serviceMonitor.enabled=true
+        argocd:
+          gnetId: 14584
+          revision: 1
+          datasource: Prometheus
+        
+        # Authentik - Authentication metrics
+        # Note: Requires Authentik server.metrics.serviceMonitor.enabled=true
+        authentik:
+          gnetId: 14837
+          revision: 2
+          datasource: Prometheus
   
   # Prometheus configuration
   prometheus:
