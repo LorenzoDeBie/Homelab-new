@@ -203,7 +203,88 @@ kube-prometheus-stack:
   # Alertmanager configuration
   alertmanager:
     enabled: true
+
+    # Alertmanager routing and receiver configuration
+    config:
+      global:
+        resolve_timeout: 5m
+
+      # Night hours - alerts are muted during this period
+      time_intervals:
+        - name: nighttime
+          time_intervals:
+            - times:
+                - start_time: '23:00'
+                  end_time: '08:00'
+              weekdays: ['sunday:saturday']
+              location: 'Europe/Brussels'
+
+      # Routing configuration
+      route:
+        receiver: 'telegram'
+        group_by: ['alertname', 'namespace', 'severity']
+        group_wait: 30s
+        group_interval: 5m
+        repeat_interval: 4h
+        routes:
+          # Critical alerts: faster repeat, but still muted at night
+          - receiver: 'telegram'
+            matchers:
+              - severity="critical"
+            repeat_interval: 1h
+            mute_time_intervals:
+              - nighttime
+            continue: false
+
+          # Warning alerts: standard timing
+          - receiver: 'telegram'
+            matchers:
+              - severity="warning"
+            repeat_interval: 4h
+            mute_time_intervals:
+              - nighttime
+            continue: false
+
+          # Info/other alerts: less frequent
+          - receiver: 'telegram'
+            repeat_interval: 12h
+            mute_time_intervals:
+              - nighttime
+
+      # Notification receivers
+      receivers:
+        - name: 'telegram'
+          telegram_configs:
+            - bot_token_file: /etc/alertmanager/secrets/alertmanager-telegram/bot-token
+              chat_id: "8472055654"  
+              send_resolved: true
+              parse_mode: HTML
+              message: |-
+                {{ if eq .Status "firing" }}🔴{{ else }}🟢{{ end }} <b>{{ .Status | toUpper }}</b>
+
+                {{ range .Alerts }}
+                <b>{{ .Labels.alertname }}</b>
+                {{ if .Annotations.summary }}{{ .Annotations.summary }}{{ end }}
+                {{ if .Annotations.description }}
+                <i>Details:</i> {{ .Annotations.description }}{{ end }}
+                <i>Severity:</i> {{ .Labels.severity | default "unknown" }}
+                {{ if .Labels.namespace }}<i>Namespace:</i> {{ .Labels.namespace }}{{ end }}
+                {{ if .Labels.pod }}<i>Pod:</i> {{ .Labels.pod }}{{ end }}
+                {{ end }}
+
+      # Inhibition rules - suppress lower severity alerts when higher ones fire
+      inhibit_rules:
+        - source_matchers:
+            - severity="critical"
+          target_matchers:
+            - severity="warning"
+          equal: ['alertname', 'namespace']
+
     alertmanagerSpec:
+      # Mount the Telegram secret so Alertmanager can read the bot token
+      secrets:
+        - alertmanager-telegram
+
       storage:
         volumeClaimTemplate:
           spec:

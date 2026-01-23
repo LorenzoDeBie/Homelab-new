@@ -1,3 +1,5 @@
 application.yaml
 secrets-application.yaml
+alertmanager-secrets-application.yaml
 grafana-secret.sops.yaml
+alertmanager-secret.sops.yaml
