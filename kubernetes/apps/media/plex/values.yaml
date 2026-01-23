@@ -12,6 +12,9 @@ app-template:
             PGID: "3001"
             VERSION: docker
             PLEX_CLAIM: ""
+            # Networks considered "local" by Plex (no remote access restrictions)
+            # Includes home network and Kubernetes internal pod/service networks
+            ALLOWED_NETWORKS: "192.168.0.0/16,10.0.0.0/8"
           resources:
             requests:
               cpu: 100m
