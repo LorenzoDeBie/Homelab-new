@@ -32,13 +32,3 @@ spec:
         certificateRefs:
           - name: internal-wildcard-tls
             namespace: kube-system
----
-# GatewayClass for Cilium - must be created before Gateway
-apiVersion: gateway.networking.k8s.io/v1
-kind: GatewayClass
-metadata:
-  name: cilium
-  annotations:
-    argocd.argoproj.io/sync-wave: "-10"
-spec:
-  controllerName: io.cilium/gateway-controller
