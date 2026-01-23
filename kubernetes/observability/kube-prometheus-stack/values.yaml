@@ -210,11 +210,19 @@ kube-prometheus-stack:
         resolve_timeout: 5m
 
       # Night hours - alerts are muted during this period
+      # Split into two intervals because start_time must be before end_time
       time_intervals:
         - name: nighttime
           time_intervals:
+            # Late night: 23:00 - midnight
             - times:
                 - start_time: '23:00'
+                  end_time: '24:00'
+              weekdays: ['sunday:saturday']
+              location: 'Europe/Brussels'
+            # Early morning: midnight - 08:00
+            - times:
+                - start_time: '00:00'
                   end_time: '08:00'
               weekdays: ['sunday:saturday']
               location: 'Europe/Brussels'
