@@ -74,6 +74,8 @@ kube-prometheus-stack:
         # JMESPath: Admin if in grafana-admins group, otherwise deny login
         role_attribute_path: contains(groups[*], 'grafana-admins') && 'Admin' || 'Deny'
         allow_assign_grafana_admin: true
+        # TODO: Re-enable TLS verification after Cloudflare migration
+        tls_skip_verify_insecure: true
     
     # Disable init-chown-data container - chown fails on NFS with Mapall
     initChownData:
