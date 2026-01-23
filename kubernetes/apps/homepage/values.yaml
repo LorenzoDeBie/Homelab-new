@@ -10,6 +10,7 @@ app-template:
             tag: latest
           env:
             TZ: Europe/Brussels
+            HOMEPAGE_ALLOWED_HOSTS: home.int.lorenzodebie.be
           envFrom:
             - secretRef:
                 name: homepage-secrets
@@ -48,6 +49,11 @@ app-template:
       identifier: config
       globalMounts:
         - path: /app/config
+    logs:
+      enabled: true
+      type: emptyDir
+      globalMounts:
+        - path: /app/config/logs
 
   configMaps:
     config:
