@@ -97,7 +97,7 @@ repoServer:
   extraContainers:
     - name: sops-plugin
       # Use argocd image which has argocd-cmp-server
-      image: quay.io/argoproj/argocd:v2.14.11@sha256:5fc69e31c755fc0209c6eb66f6280ece558990bfb77704795e0e939b6bb6f434
+      image: quay.io/argoproj/argocd:v2.14.21@sha256:2fe6dadaa0c137ed74c845d6fc6cc78b104fa5c76bbd25fff791424318f95eca
       command:
         - /var/run/argocd/argocd-cmp-server
       env:
