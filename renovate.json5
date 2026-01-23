@@ -1,62 +1,70 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended",
-    ":dependencyDashboard"
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: [
+    'config:recommended',
+    ':dependencyDashboard',
   ],
-  
-  // Run on Saturday mornings only
-  "schedule": ["before 6am on Saturday"],
-  "timezone": "Europe/Brussels",
-  
-  // Automerge strategy
-  "packageRules": [
-    // Automerge minor and patch updates
-    {
-      "matchUpdateTypes": ["minor", "patch"],
-      "automerge": true,
-      "automergeType": "pr",
-      "platformAutomerge": true
-    },
-    // Major updates require review
-    {
-      "matchUpdateTypes": ["major"],
-      "automerge": false,
-      "labels": ["major-update"]
-    },
-    // Group all LinuxServer.io media images together
-    {
-      "matchPackagePatterns": ["linuxserver/(prowlarr|radarr|sonarr|qbittorrent|plex|overseerr)"],
-      "groupName": "linuxserver media stack"
-    },
-    // Group observability stack
-    {
-      "matchPackageNames": ["kube-prometheus-stack", "loki", "promtail", "grafana"],
-      "groupName": "observability stack"
-    },
-    // Pin digest for container images (optional extra safety)
-    {
-      "matchDatasources": ["docker"],
-      "pinDigests": true
-    }
+  schedule: [
+    'before 6am on Saturday',
   ],
-  
-  // File matching patterns
-  "helm-values": {
-    "fileMatch": ["kubernetes/.+/values\\.yaml$"]
+  timezone: 'Europe/Brussels',
+  packageRules: [
+    {
+      matchUpdateTypes: [
+        'minor',
+        'patch',
+      ],
+      automerge: true,
+      automergeType: 'pr',
+      platformAutomerge: true,
+    },
+    {
+      matchUpdateTypes: [
+        'major',
+      ],
+      automerge: false,
+      labels: [
+        'major-update',
+      ],
+    },
+    {
+      groupName: 'linuxserver media stack',
+      matchPackageNames: [
+        '/linuxserver/(prowlarr|radarr|sonarr|qbittorrent|plex|overseerr)/',
+      ],
+    },
+    {
+      matchPackageNames: [
+        'kube-prometheus-stack',
+        'loki',
+        'promtail',
+        'grafana',
+      ],
+      groupName: 'observability stack',
+    },
+    {
+      matchDatasources: [
+        'docker',
+      ],
+      pinDigests: true,
+    },
+  ],
+  'helm-values': {
+    managerFilePatterns: [
+      '/kubernetes/.+/values\\.yaml$/',
+    ],
   },
-  
-  // Terraform support
-  "terraform": {
-    "fileMatch": ["terraform/.+\\.tf$"]
+  terraform: {
+    managerFilePatterns: [
+      '/terraform/.+\\.tf$/',
+    ],
   },
-  
-  // Commit message style
-  "commitMessagePrefix": "chore(deps):",
-  "commitMessageAction": "update",
-  
-  // PR settings
-  "prHourlyLimit": 5,
-  "prConcurrentLimit": 10,
-  "labels": ["dependencies", "renovate"]
+  commitMessagePrefix: 'chore(deps):',
+  commitMessageAction: 'update',
+  prHourlyLimit: 5,
+  prConcurrentLimit: 10,
+  labels: [
+    'dependencies',
+    'renovate',
+  ],
 }
