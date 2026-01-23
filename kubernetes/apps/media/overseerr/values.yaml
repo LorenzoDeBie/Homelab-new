@@ -5,7 +5,7 @@ app-template:
         app:
           image:
             repository: lscr.io/linuxserver/overseerr
-            tag: v1.34.0-ls154
+            tag: v1.34.0-ls154@sha256:f6a782e44742a02bdb6032d32ebb4e9615e261140f879be897b28cdb40ff800e
           env:
             TZ: Europe/Brussels
             PUID: "1000"
