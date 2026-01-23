@@ -107,7 +107,7 @@ argo-cd:
     # Install SOPS binary
     initContainers:
       - name: install-sops
-        image: alpine:latest
+        image: alpine:latest@sha256:865b95f46d98cf867a156fe4a135ad3fe50d2056aa3f25ed31662dff6da4eb62
         command:
           - sh
           - -c
@@ -122,7 +122,7 @@ argo-cd:
     extraContainers:
       - name: sops-plugin
         # Use argocd image which has argocd-cmp-server
-        image: quay.io/argoproj/argocd:v2.14.11
+        image: quay.io/argoproj/argocd:v2.14.11@sha256:5fc69e31c755fc0209c6eb66f6280ece558990bfb77704795e0e939b6bb6f434
         command:
           - /var/run/argocd/argocd-cmp-server
         env:
