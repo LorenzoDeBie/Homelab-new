@@ -48,6 +48,33 @@ kube-prometheus-stack:
       userKey: admin-user
       passwordKey: admin-password
     
+    # Inject OAuth client secret as environment variable
+    envValueFrom:
+      GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
+        secretKeyRef:
+          name: grafana-admin
+          key: oauth-client-secret
+    
+    # Grafana configuration
+    grafana.ini:
+      server:
+        root_url: https://grafana.int.lorenzodebie.be
+      auth:
+        disable_login_form: false  # Keep local admin as fallback
+      auth.generic_oauth:
+        enabled: true
+        name: Authentik
+        allow_sign_up: true
+        client_id: grafana
+        # client_secret injected via GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET env var
+        scopes: openid email profile groups
+        auth_url: https://auth.int.lorenzodebie.be/application/o/authorize/
+        token_url: https://auth.int.lorenzodebie.be/application/o/token/
+        api_url: https://auth.int.lorenzodebie.be/application/o/userinfo/
+        # JMESPath: Admin if in grafana-admins group, otherwise deny login
+        role_attribute_path: contains(groups[*], 'grafana-admins') && 'Admin' || 'Deny'
+        allow_assign_grafana_admin: true
+    
     # Disable init-chown-data container - chown fails on NFS with Mapall
     initChownData:
       enabled: false

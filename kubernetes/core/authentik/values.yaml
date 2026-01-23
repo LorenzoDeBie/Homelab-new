@@ -42,6 +42,12 @@ authentik:
           secretKeyRef:
             name: authentik-secrets
             key: argocd-oidc-client-secret
+      # Grafana OIDC client secret - used by blueprint via !Env tag
+      - name: GRAFANA_OIDC_CLIENT_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: authentik-secrets
+            key: grafana-oidc-client-secret
   
   server:
     replicas: 1
@@ -57,6 +63,9 @@ authentik:
       - name: argocd-blueprint
         configMap:
           name: authentik-argocd-blueprint
+      - name: grafana-blueprint
+        configMap:
+          name: authentik-grafana-blueprint
     volumeMounts:
       - name: arr-apps-blueprint
         mountPath: /blueprints/custom/arr-apps-proxy.yaml
@@ -64,6 +73,9 @@ authentik:
       - name: argocd-blueprint
         mountPath: /blueprints/custom/argocd-oidc.yaml
         subPath: argocd-oidc.yaml
+      - name: grafana-blueprint
+        mountPath: /blueprints/custom/grafana-oidc.yaml
+        subPath: grafana-oidc.yaml
   
   worker:
     replicas: 1
@@ -75,6 +87,9 @@ authentik:
       - name: argocd-blueprint
         configMap:
           name: authentik-argocd-blueprint
+      - name: grafana-blueprint
+        configMap:
+          name: authentik-grafana-blueprint
     volumeMounts:
       - name: arr-apps-blueprint
         mountPath: /blueprints/custom/arr-apps-proxy.yaml
@@ -82,6 +97,9 @@ authentik:
       - name: argocd-blueprint
         mountPath: /blueprints/custom/argocd-oidc.yaml
         subPath: argocd-oidc.yaml
+      - name: grafana-blueprint
+        mountPath: /blueprints/custom/grafana-oidc.yaml
+        subPath: grafana-oidc.yaml
   
   # Embedded PostgreSQL
   postgresql:
