@@ -3,7 +3,7 @@
 # Docs: https://budimanjojo.github.io/talhelper/latest/
 
 clusterName: homelab
-talosVersion: v1.12.1
+talosVersion: v1.12.2
 kubernetesVersion: v1.35.0
 endpoint: https://192.168.30.50:6443
 
