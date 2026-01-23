@@ -4,7 +4,7 @@
 
 clusterName: homelab
 talosVersion: v1.12.1
-kubernetesVersion: v1.35.0  # Note: v1.35.0 is latest but Talos v1.12.1 supports up to v1.32.x
+kubernetesVersion: v1.35.0
 endpoint: https://192.168.30.50:6443
 
 # Allow workloads on control plane (single node cluster)
