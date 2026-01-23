@@ -107,6 +107,30 @@ data:
           authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
           invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
 
+      # Tautulli Proxy Provider
+      - model: authentik_providers_proxy.proxyprovider
+        id: tautulli-proxy-provider
+        identifiers:
+          name: tautulli-proxy
+        attrs:
+          external_host: https://tautulli.int.lorenzodebie.be
+          internal_host: http://tautulli.media.svc.cluster.local:8181
+          mode: proxy
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+
+      # Bazarr Proxy Provider
+      - model: authentik_providers_proxy.proxyprovider
+        id: bazarr-proxy-provider
+        identifiers:
+          name: bazarr-proxy
+        attrs:
+          external_host: https://bazarr.int.lorenzodebie.be
+          internal_host: http://bazarr.media.svc.cluster.local:6767
+          mode: proxy
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+
       # Sonarr Application
       - model: authentik_core.application
         id: sonarr-app
@@ -162,6 +186,28 @@ data:
           meta_launch_url: https://home.int.lorenzodebie.be
           policy_engine_mode: any
 
+      # Tautulli Application
+      - model: authentik_core.application
+        id: tautulli-app
+        identifiers:
+          slug: tautulli
+        attrs:
+          name: Tautulli
+          provider: !KeyOf tautulli-proxy-provider
+          meta_launch_url: https://tautulli.int.lorenzodebie.be
+          policy_engine_mode: any
+
+      # Bazarr Application
+      - model: authentik_core.application
+        id: bazarr-app
+        identifiers:
+          slug: bazarr
+        attrs:
+          name: Bazarr
+          provider: !KeyOf bazarr-proxy-provider
+          meta_launch_url: https://bazarr.int.lorenzodebie.be
+          policy_engine_mode: any
+
       # Policy bindings - bind media-access-policy to each application
       - model: authentik_policies.policybinding
         identifiers:
@@ -215,6 +261,28 @@ data:
           enabled: true
           timeout: 30
 
+      # Policy binding - bind media-access-policy to Tautulli
+      - model: authentik_policies.policybinding
+        identifiers:
+          target: !KeyOf tautulli-app
+          order: 0
+        attrs:
+          policy: !KeyOf media-access-policy
+          negate: false
+          enabled: true
+          timeout: 30
+
+      # Policy binding - bind media-access-policy to Bazarr
+      - model: authentik_policies.policybinding
+        identifiers:
+          target: !KeyOf bazarr-app
+          order: 0
+        attrs:
+          policy: !KeyOf media-access-policy
+          negate: false
+          enabled: true
+          timeout: 30
+
       # Update embedded outpost to include these applications
       - model: authentik_outposts.outpost
         identifiers:
@@ -227,6 +295,8 @@ data:
             - !KeyOf prowlarr-proxy-provider
             - !KeyOf qbittorrent-proxy-provider
             - !KeyOf homepage-proxy-provider
+            - !KeyOf tautulli-proxy-provider
+            - !KeyOf bazarr-proxy-provider
           config:
             authentik_host: https://auth.int.lorenzodebie.be
 
