@@ -1,124 +1,92 @@
 # AGENTS.md - AI Agent Guidelines for Homelab Repository
 
-This document provides guidelines for AI coding agents working on this infrastructure-as-code repository.
+This is a GitOps infrastructure-as-code repository for a single-node Kubernetes cluster on Talos Linux. **No application code** - purely infrastructure configuration.
 
-## Repository Overview
-
-This is a GitOps homelab infrastructure repository for a single-node Kubernetes cluster running on Talos Linux. There is no application code to build - this is purely infrastructure configuration.
-
-**Stack:** Proxmox (hypervisor) -> Talos Linux (OS) -> Kubernetes -> ArgoCD (GitOps) -> Applications
+**Stack:** Proxmox -> Talos Linux -> Kubernetes -> ArgoCD (GitOps) -> Applications
 
 ## Directory Structure
 
 ```
-kubernetes/           # Kubernetes manifests (ArgoCD manages these)
-├── bootstrap/        # ArgoCD configuration
-├── core/             # Core infrastructure (Cilium, cert-manager, Authentik, etc.)
+kubernetes/
+├── bootstrap/        # Initial ArgoCD setup
+├── core/             # Infrastructure (Cilium, cert-manager, Authentik)
 ├── apps/             # User applications (media stack)
 └── observability/    # Monitoring (Prometheus, Grafana, Loki)
-talos/                # Talos Linux configuration (talconfig.yaml)
+talos/                # Talos Linux config (talconfig.yaml)
 terraform/proxmox/    # Terraform for Proxmox VM provisioning
-docs/                 # Documentation
-```
-
-## Required CLI Tools
-
-```bash
-# Install on macOS
-brew install terraform talosctl talhelper kubectl helm argocd sops age
 ```
 
 ## Commands Reference
 
-### Talos Configuration
+### Validation Commands (No Cluster Required)
 
 ```bash
-# Generate Talos configs from talconfig.yaml
+# Validate Helm chart
+cd kubernetes/core/<app> && helm dependency build && helm template . --values values.yaml
+
+# Validate Terraform
+cd terraform/proxmox && terraform init && terraform validate
+
+# Generate Talos configs (validates talconfig.yaml)
 cd talos && talhelper genconfig
+```
 
-# Apply config to node
+### Cluster Commands
+
+```bash
+# Terraform
+cd terraform/proxmox && terraform plan && terraform apply
+
+# Talos
 talosctl apply-config --insecure --nodes 192.168.30.50 --file clusterconfig/homelab-talos-cp01.yaml
-
-# Check node health
 talosctl --talosconfig clusterconfig/talosconfig --nodes 192.168.30.50 health
-```
 
-### Terraform (Proxmox)
-
-```bash
-cd terraform/proxmox
-terraform init
-terraform plan
-terraform apply
-```
-
-### Helm Charts
-
-```bash
-# Download dependencies for an umbrella chart
-cd kubernetes/core/authentik
-helm dependency build
-
-# Template chart locally (validation)
-helm template . --values values.yaml
-```
-
-### Secrets Management (SOPS)
-
-```bash
-# Encrypt a secret file
-sops --encrypt --in-place path/to/secret.sops.yaml
-
-# Decrypt for editing
-sops path/to/secret.sops.yaml
-
-# Create new encrypted secret (encryption happens automatically due to .sops.yaml)
-sops kubernetes/core/example/new-secret.sops.yaml
-```
-
-### Kubernetes Validation
-
-```bash
-# Verify resources after ArgoCD sync
+# Kubernetes verification
 kubectl get pods -n <namespace>
-kubectl describe pod <pod> -n <namespace>
-kubectl logs -n <namespace> <pod>
-
-# Check Gateway API resources
 kubectl get gateway,httproute -A
+argocd app list
 ```
 
-## File Patterns & Naming Conventions
+### Secrets (SOPS)
 
-### Kubernetes Manifests
-
-| File | Purpose |
-|------|---------|
-| `application.yaml` | ArgoCD Application definition for main deployment |
-| `secrets-application.yaml` | Separate ArgoCD Application for SOPS-encrypted secrets |
-| `*.sops.yaml` | SOPS-encrypted Secret manifests (safe to commit) |
-| `values.yaml` | Helm values passed to upstream chart |
-| `Chart.yaml` | Helm umbrella chart definition with dependencies |
-| `.helmignore` | Excludes ArgoCD/SOPS files from Helm packaging |
-| `templates/*.yaml` | Local Kubernetes manifests (HTTPRoutes, etc.) |
-
-### Naming Rules
-
-- **Kubernetes resources:** kebab-case (`internal-gateway`, `nfs-config`)
-- **Namespaces:** lowercase (`argocd`, `media`, `authentik`)
-- **Files:** lowercase with hyphens (`cloudflare-secret.sops.yaml`)
-- **Terraform variables:** snake_case (`vm_disk_size`, `proxmox_endpoint`)
+```bash
+sops --encrypt --in-place path/to/secret.sops.yaml  # Encrypt
+sops path/to/secret.sops.yaml                        # Edit (decrypts in place)
+```
 
 ## Code Style Guidelines
 
 ### YAML Formatting
 
-- Use 2-space indentation
-- Place descriptive comments above complex blocks
-- Use `---` to separate multiple documents in one file
-- Keep lines under 120 characters where practical
+- **2-space indentation** (no tabs)
+- Comments above complex blocks, not inline
+- Use `---` to separate multiple documents
+- Lines under 120 characters
 
-### ArgoCD Application Template
+### Naming Conventions
+
+| Type | Convention | Example |
+|------|------------|---------|
+| Kubernetes resources | kebab-case | `internal-gateway` |
+| Namespaces | lowercase | `argocd`, `media` |
+| Files | lowercase-hyphens | `cloudflare-secret.sops.yaml` |
+| Terraform variables | snake_case | `vm_disk_size` |
+
+### File Naming Patterns
+
+| File | Purpose |
+|------|---------|
+| `application.yaml` | ArgoCD Application for main deployment |
+| `secrets-application.yaml` | ArgoCD Application for SOPS secrets |
+| `*.sops.yaml` | SOPS-encrypted secrets (safe to commit) |
+| `values.yaml` | Helm values for upstream chart |
+| `Chart.yaml` | Helm umbrella chart with dependencies |
+| `.helmignore` | Must exclude: `application.yaml`, `*-application.yaml`, `*.sops.yaml` |
+| `templates/*.yaml` | Local Kubernetes manifests |
+
+## Required Patterns
+
+### ArgoCD Application
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -127,7 +95,7 @@ metadata:
   name: <app-name>
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "10"  # Optional: control deploy order
+    argocd.argoproj.io/sync-wave: "10"  # Control deploy order
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -135,7 +103,7 @@ spec:
   source:
     repoURL: https://github.com/LorenzoDeBie/Homelab-new.git
     targetRevision: main
-    path: kubernetes/core/<app-name>
+    path: kubernetes/<category>/<app-name>
     helm:
       valueFiles:
         - values.yaml
@@ -148,136 +116,76 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      - ServerSideApply=true
 ```
 
-### Helm Umbrella Chart Structure
-
-When deploying an upstream Helm chart with local templates:
-
-```
-component/
-├── Chart.yaml           # Declares upstream dependency
-├── Chart.lock           # Lock file (auto-generated)
-├── charts/              # Downloaded deps (gitignored)
-├── values.yaml          # Values passed to subchart
-├── .helmignore          # Must exclude: application.yaml, *-application.yaml, *.sops.yaml
-├── application.yaml     # ArgoCD Application
-├── secrets-application.yaml  # ArgoCD Application for SOPS secrets
-└── templates/
-    └── httproute.yaml   # Local manifests alongside upstream
-```
-
-### Secrets Pattern
-
-Secrets are handled via separate ArgoCD Applications using the SOPS plugin:
-
-```yaml
-# secrets-application.yaml
-spec:
-  source:
-    plugin:
-      name: sops-file
-      env:
-        - name: FILE
-          value: secrets.sops.yaml
-```
-
-Use sync-wave annotations to ensure secrets deploy before the main app.
-
-### Terraform Style
-
-- Include `description` for all variables
-- Mark sensitive variables with `sensitive = true`
-- Use `# Comment` style for inline documentation
-- Organize: `versions.tf`, `variables.tf`, `main.tf`, `outputs.tf`
-
-## Critical Files - Do Not Modify
-
-- `age.key` - SOPS private key (not in repo, never commit)
-- `talos/clusterconfig/` - Generated Talos configs with secrets (gitignored)
-- `*.tfstate`, `*.tfstate.*` - Terraform state files
-- `.sops.yaml` - SOPS encryption rules (modify carefully)
-
-## GitOps Workflow
-
-1. Make changes to manifests in this repository
-2. Commit and push to `main` branch
-3. ArgoCD automatically detects changes and syncs
-4. Verify in ArgoCD UI or via `argocd app list`
-
-**Do NOT apply manifests directly with kubectl** (except for initial bootstrap). All changes should go through Git.
-
-## Sync Waves
-
-Use `argocd.argoproj.io/sync-wave` annotations to control deployment order:
-
-- `-10`: CRDs, GatewayClass (must exist first)
-- `0`: Certificates, basic resources
-- `5`: Secrets (before apps that need them)
-- `10`: Main applications
-
-## Common Patterns
-
-### HTTPRoute for Internal Gateway
+### HTTPRoute (Gateway API)
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: <service-name>
+  name: <service>
   namespace: <namespace>
 spec:
   parentRefs:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      name: internal-gateway
+    - name: internal-gateway
       namespace: kube-system
   hostnames:
     - <service>.int.lorenzodebie.be
   rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /
-      backendRefs:
+    - backendRefs:
         - name: <service>
           port: <port>
 ```
 
-### LoadBalancer with Static IP (Cilium L2)
+### Sync Waves
 
-```yaml
-service:
-  type: LoadBalancer
-  annotations:
-    io.cilium/lb-ipam-ips: "192.168.30.XX"
+- `-10`: CRDs, GatewayClass
+- `-5` to `-1`: Core dependencies (cert-manager, secrets)
+- `0`: Default
+- `5`: Secrets before apps
+- `10`: Applications
+
+## Critical Rules
+
+1. **Never commit unencrypted secrets** - Use `*.sops.yaml` pattern
+2. **Never apply with kubectl** - All changes go through Git/ArgoCD
+3. **Never modify**: `age.key`, `talos/clusterconfig/`, `*.tfstate`
+4. **Always include `.helmignore`** when creating Helm umbrella charts
+
+### Terraform Style
+
+```hcl
+variable "example" {
+  description = "Always include description"
+  type        = string
+  sensitive   = true  # For secrets
+  default     = null
+}
 ```
+
+File organization: `versions.tf`, `variables.tf`, `main.tf`, `outputs.tf`
 
 ## IP Allocations
 
-| Range | Purpose |
-|-------|---------|
-| 192.168.30.50 | Kubernetes API endpoint |
+| IP | Purpose |
+|----|---------|
+| 192.168.30.50 | Kubernetes API |
 | 192.168.30.51 | Kubelet node IP |
 | 192.168.30.61 | Internal Gateway |
-| 192.168.30.62 | Plex LoadBalancer |
-| 192.168.30.63 | qBittorrent BitTorrent |
+| 192.168.30.62-63 | Plex, qBittorrent |
 | 192.168.30.64-80 | Available pool |
 
-## Troubleshooting Tips
+## Troubleshooting
 
 ```bash
-# ArgoCD sync issues
-kubectl logs -n argocd -l app.kubernetes.io/name=argocd-repo-server
+kubectl logs -n argocd -l app.kubernetes.io/name=argocd-repo-server  # ArgoCD
+kubectl describe gateway internal-gateway -n kube-system             # Gateway
+cilium status                                                         # Cilium
+```
 
-# Check SOPS decryption
-kubectl logs -n argocd -l app.kubernetes.io/name=argocd-repo-server -c sops
+## Required Tools
 
-# Gateway/HTTPRoute issues
-kubectl get gateway,httproute -A
-kubectl describe gateway internal-gateway -n kube-system
-
-# Cilium status
-cilium status
+```bash
+brew install terraform talosctl talhelper kubectl helm argocd sops age
 ```
