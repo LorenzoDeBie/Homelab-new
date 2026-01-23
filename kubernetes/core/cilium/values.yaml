@@ -46,6 +46,13 @@ cilium:
   externalIPs:
     enabled: true
 
+  # Prometheus metrics for cilium-agent
+  prometheus:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      trustCRDsExist: true
+
   # Hubble for observability
   hubble:
     enabled: true
@@ -53,10 +60,26 @@ cilium:
       enabled: true
     ui:
       enabled: true
+    metrics:
+      enabled:
+        - dns
+        - drop
+        - tcp
+        - flow
+        - icmp
+        - httpV2:exemplars=true;labelsContext=source_ip,source_namespace,source_workload,destination_ip,destination_namespace,destination_workload,traffic_direction
+      enableOpenMetrics: true
+      serviceMonitor:
+        enabled: true
 
   # Operator settings
   operator:
     replicas: 1
+    prometheus:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+        trustCRDsExist: true
 
   # Required for Tailscale Connector subnet routing
   # When Cilium replaces kube-proxy, socket LB bypass is needed

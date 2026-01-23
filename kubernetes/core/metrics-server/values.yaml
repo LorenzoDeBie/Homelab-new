@@ -8,3 +8,7 @@ metrics-server:
       memory: 32Mi
     limits:
       memory: 64Mi
+
+  # Prometheus ServiceMonitor
+  serviceMonitor:
+    enabled: true

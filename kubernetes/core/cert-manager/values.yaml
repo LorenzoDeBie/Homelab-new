@@ -14,7 +14,7 @@ cert-manager:
   prometheus:
     enabled: true
     servicemonitor:
-      enabled: false  # CRD not available at sync-wave -5; enable after kube-prometheus-stack is deployed
+      enabled: true
 
   # DNS01 solver requires additional permissions
   extraArgs:

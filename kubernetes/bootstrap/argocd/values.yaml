@@ -137,29 +137,29 @@ server:
   metrics:
     enabled: true
     serviceMonitor:
-      enabled: false  # Enable after kube-prometheus-stack is deployed
+      enabled: true
 
 controller:
   metrics:
     enabled: true
     serviceMonitor:
-      enabled: false  # Enable after kube-prometheus-stack is deployed
+      enabled: true
 
 redis:
   metrics:
     enabled: true
     serviceMonitor:
-      enabled: false  # Enable after kube-prometheus-stack is deployed
+      enabled: true
 
 applicationSet:
   metrics:
     enabled: true
     serviceMonitor:
-      enabled: false  # Enable after kube-prometheus-stack is deployed
+      enabled: true
 
 notifications:
   enabled: true
   metrics:
     enabled: true
     serviceMonitor:
-      enabled: false  # Enable after kube-prometheus-stack is deployed
+      enabled: true

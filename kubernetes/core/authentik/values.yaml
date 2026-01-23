@@ -54,7 +54,7 @@ authentik:
     metrics:
       enabled: true
       serviceMonitor:
-        enabled: false  # Enable after kube-prometheus-stack is deployed
+        enabled: true
     # Mount custom blueprints
     volumes:
       - name: arr-apps-blueprint
