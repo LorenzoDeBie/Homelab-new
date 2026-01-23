@@ -1,0 +1,26 @@
+# HTTPRoute for Tautulli - routed through Authentik for authentication
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: tautulli
+  namespace: media
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: internal-gateway
+      namespace: kube-system
+  hostnames:
+    - tautulli.int.lorenzodebie.be
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - group: ""
+          kind: Service
+          name: authentik-server
+          namespace: authentik
+          port: 80
+          weight: 1
