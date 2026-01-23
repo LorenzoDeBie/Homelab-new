@@ -5,7 +5,7 @@ app-template:
         app:
           image:
             repository: lscr.io/linuxserver/overseerr
-            tag: latest
+            tag: v1.34.0-ls154
           env:
             TZ: Europe/Brussels
             PUID: "1000"

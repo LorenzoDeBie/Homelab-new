@@ -82,7 +82,7 @@ repoServer:
   # Install SOPS binary
   initContainers:
     - name: install-sops
-      image: alpine:latest
+      image: alpine:3.22
       command:
         - sh
         - -c
