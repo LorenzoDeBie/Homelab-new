@@ -8,56 +8,12 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://bjw-s-labs.github.io/helm-charts
-    chart: app-template
-    targetRevision: 4.6.2
+    repoURL: https://github.com/LorenzoDeBie/Homelab-new.git
+    targetRevision: main
+    path: kubernetes/apps/media/overseerr
     helm:
-      valuesObject:
-        controllers:
-          overseerr:
-            containers:
-              app:
-                image:
-                  repository: lscr.io/linuxserver/overseerr
-                  tag: latest
-                env:
-                  TZ: Europe/Brussels
-                  PUID: "1000"
-                  PGID: "1000"
-                  LOG_LEVEL: info
-                resources:
-                  requests:
-                    cpu: 50m
-                    memory: 256Mi
-                  limits:
-                    memory: 1Gi
-                probes:
-                  liveness:
-                    enabled: true
-                  readiness:
-                    enabled: true
-                  startup:
-                    enabled: true
-                    spec:
-                      failureThreshold: 30
-                      periodSeconds: 5
-        
-        service:
-          app:
-            controller: overseerr
-            ports:
-              http:
-                port: 5055
-        
-        persistence:
-          config:
-            enabled: true
-            type: persistentVolumeClaim
-            storageClass: nfs-config
-            accessMode: ReadWriteOnce
-            size: 1Gi
-            globalMounts:
-              - path: /config
+      valueFiles:
+        - values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: media
@@ -67,3 +23,4 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
