@@ -45,7 +45,7 @@ app-template:
     config:
       enabled: true
       type: configMap
-      name: homepage-config
+      identifier: config
       globalMounts:
         - path: /app/config
 
