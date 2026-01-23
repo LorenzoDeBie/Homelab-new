@@ -1,0 +1,173 @@
+app-template:
+  controllers:
+    homepage:
+      serviceAccount:
+        identifier: homepage
+      containers:
+        app:
+          image:
+            repository: ghcr.io/gethomepage/homepage
+            tag: latest
+          env:
+            TZ: Europe/Brussels
+          envFrom:
+            - secretRef:
+                name: homepage-secrets
+          resources:
+            requests:
+              cpu: 10m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
+            startup:
+              enabled: true
+              spec:
+                failureThreshold: 30
+                periodSeconds: 5
+
+  serviceAccount:
+    homepage:
+      enabled: true
+
+  service:
+    app:
+      controller: homepage
+      ports:
+        http:
+          port: 3000
+
+  persistence:
+    config:
+      enabled: true
+      type: configMap
+      name: homepage-config
+      globalMounts:
+        - path: /app/config
+
+  configMaps:
+    config:
+      enabled: true
+      data:
+        settings.yaml: |
+          title: Homelab
+          favicon: https://github.com/gethomepage/homepage/raw/main/public/android-chrome-192x192.png
+          theme: dark
+          color: slate
+          headerStyle: clean
+          layout:
+            Media:
+              style: row
+              columns: 4
+            Downloads:
+              style: row
+              columns: 2
+            Infrastructure:
+              style: row
+              columns: 3
+
+        widgets.yaml: |
+          - kubernetes:
+              cluster:
+                show: true
+                cpu: true
+                memory: true
+                showLabel: true
+                label: "homelab"
+              nodes:
+                show: true
+                cpu: true
+                memory: true
+                showLabel: true
+          - datetime:
+              text_size: xl
+              format:
+                dateStyle: long
+                timeStyle: short
+                hour12: false
+
+        services.yaml: |
+          - Media:
+              - Plex:
+                  icon: plex.png
+                  href: https://plex.int.lorenzodebie.be
+                  description: Media Server
+                  widget:
+                    type: plex
+                    url: http://plex.media.svc.cluster.local:32400
+                    key: "{{`{{HOMEPAGE_VAR_PLEX_TOKEN}}`}}"
+              - Overseerr:
+                  icon: overseerr.png
+                  href: https://overseerr.int.lorenzodebie.be
+                  description: Media Requests
+                  widget:
+                    type: overseerr
+                    url: http://overseerr.media.svc.cluster.local:5055
+                    key: "{{`{{HOMEPAGE_VAR_OVERSEERR_API_KEY}}`}}"
+              - Sonarr:
+                  icon: sonarr.png
+                  href: https://sonarr.int.lorenzodebie.be
+                  description: TV Shows
+                  widget:
+                    type: sonarr
+                    url: http://sonarr.media.svc.cluster.local:8989
+                    key: "{{`{{HOMEPAGE_VAR_SONARR_API_KEY}}`}}"
+              - Radarr:
+                  icon: radarr.png
+                  href: https://radarr.int.lorenzodebie.be
+                  description: Movies
+                  widget:
+                    type: radarr
+                    url: http://radarr.media.svc.cluster.local:7878
+                    key: "{{`{{HOMEPAGE_VAR_RADARR_API_KEY}}`}}"
+
+          - Downloads:
+              - qBittorrent:
+                  icon: qbittorrent.png
+                  href: https://qbittorrent.int.lorenzodebie.be
+                  description: Torrent Client
+                  widget:
+                    type: qbittorrent
+                    url: http://qbittorrent.media.svc.cluster.local:8080
+                    username: "{{`{{HOMEPAGE_VAR_QBITTORRENT_USERNAME}}`}}"
+                    password: "{{`{{HOMEPAGE_VAR_QBITTORRENT_PASSWORD}}`}}"
+              - Prowlarr:
+                  icon: prowlarr.png
+                  href: https://prowlarr.int.lorenzodebie.be
+                  description: Indexer Manager
+                  widget:
+                    type: prowlarr
+                    url: http://prowlarr.media.svc.cluster.local:9696
+                    key: "{{`{{HOMEPAGE_VAR_PROWLARR_API_KEY}}`}}"
+
+          - Infrastructure:
+              - ArgoCD:
+                  icon: argocd.png
+                  href: https://argocd.int.lorenzodebie.be
+                  description: GitOps
+              - Grafana:
+                  icon: grafana.png
+                  href: https://grafana.int.lorenzodebie.be
+                  description: Monitoring Dashboards
+              - Authentik:
+                  icon: authentik.png
+                  href: https://auth.int.lorenzodebie.be
+                  description: Identity Provider
+
+        bookmarks.yaml: |
+          - External:
+              - GitHub:
+                  - icon: github.png
+                    href: https://github.com/LorenzoDeBie/Homelab-new
+              - Cloudflare:
+                  - icon: cloudflare.png
+                    href: https://dash.cloudflare.com
+
+        docker.yaml: ""
+
+        kubernetes.yaml: |
+          mode: cluster

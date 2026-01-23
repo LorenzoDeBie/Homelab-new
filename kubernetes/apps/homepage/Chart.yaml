@@ -1,0 +1,11 @@
+apiVersion: v2
+name: homepage
+description: Homepage dashboard with Kubernetes service discovery
+type: application
+version: 1.0.0
+appVersion: "latest"
+
+dependencies:
+  - name: app-template
+    version: 4.6.2
+    repository: https://bjw-s-labs.github.io/helm-charts
