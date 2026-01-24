@@ -8,8 +8,8 @@ app-template:
             tag: 2.3.0.5236-ls135@sha256:d3e9307b320b6772749a2cf8fc2712e9e824c4930b034680ad4d08a9e2f25884
           env:
             TZ: Europe/Brussels
-            PUID: "1000"
-            PGID: "1000"
+            PUID: "3001"
+            PGID: "3001"
           resources:
             requests:
               cpu: 50m
