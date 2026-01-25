@@ -223,6 +223,12 @@ kube-prometheus-stack:
         group_interval: 5m
         repeat_interval: 4h
         routes:
+          # Watchdog alert - silently drop (dead man's switch)
+          - receiver: 'null'
+            matchers:
+              - alertname="Watchdog"
+            continue: false
+
           # Critical alerts: faster repeat, but still muted at night
           - receiver: 'telegram'
             matchers:
@@ -249,6 +255,7 @@ kube-prometheus-stack:
 
       # Notification receivers
       receivers:
+        - name: 'null'  # Silently drop alerts (used for Watchdog)
         - name: 'telegram'
           telegram_configs:
             - bot_token_file: /etc/alertmanager/secrets/alertmanager-telegram/bot-token
