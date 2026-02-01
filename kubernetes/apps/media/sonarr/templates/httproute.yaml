@@ -24,3 +24,5 @@ spec:
           namespace: authentik
           port: 80
           weight: 1
+      timeouts:
+        request: 300s
