@@ -48,7 +48,6 @@
       ],
       pinDigests: true,
     },
-    // Talos infrastructure requires manual review (single-node cluster downtime)
     {
       matchPackageNames: [
         'siderolabs/talos',
@@ -80,12 +79,12 @@
     'dependencies',
     'renovate',
   ],
-
-  // Custom managers for Talos infrastructure versions
   customManagers: [
     {
       customType: 'regex',
-      fileMatch: ['talos/talconfig\\.yaml$'],
+      managerFilePatterns: [
+        '/talos/talconfig\\.yaml$/',
+      ],
       matchStrings: [
         'talosVersion:\\s*(?<currentValue>v[\\d\\.]+)',
       ],
@@ -94,7 +93,9 @@
     },
     {
       customType: 'regex',
-      fileMatch: ['talos/talconfig\\.yaml$'],
+      managerFilePatterns: [
+        '/talos/talconfig\\.yaml$/',
+      ],
       matchStrings: [
         'kubernetesVersion:\\s*(?<currentValue>v[\\d\\.]+)',
       ],
