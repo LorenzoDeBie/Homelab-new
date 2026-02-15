@@ -34,6 +34,10 @@ spec:
             # Overseerr - public access for media requests
             - hostname: requests.lorenzodebie.be
               service: http://overseerr.media.svc.cluster.local:5055
+
+            # Wordpress - Wedding RSVP Site
+            - hostname: wedding.lorenzodebie.be
+              service: http://wp-wedding.wedding.svc.cluster.local:80
         
         replicaCount: 1
   destination:
