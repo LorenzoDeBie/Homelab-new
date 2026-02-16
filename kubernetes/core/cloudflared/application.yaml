@@ -39,6 +39,8 @@ spec:
             - hostname: wedding.lorenzodebie.be
               service: http://wp-wedding.wedding.svc.cluster.local:80
         
+        image:
+          tag: latest
         replicaCount: 1
   destination:
     server: https://kubernetes.default.svc
