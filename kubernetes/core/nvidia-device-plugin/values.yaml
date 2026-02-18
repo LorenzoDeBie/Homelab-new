@@ -10,8 +10,18 @@ nvidia-device-plugin:
         type: Directory
   extraVolumeMounts:
     - name: nvidia-driver-root
-      mountPath: /usr/local/glibc
+      mountPath: /driver-root
       readOnly: true
+  daemonset:
+    extraVolumes:
+      - name: nvidia-driver-root
+        hostPath:
+          path: /usr/local/glibc
+          type: Directory
+    extraVolumeMounts:
+      - name: nvidia-driver-root
+        mountPath: /driver-root
+        readOnly: true
   config:
     default: default
     map:
@@ -20,7 +30,7 @@ nvidia-device-plugin:
         flags:
           migStrategy: none
           failOnInitError: true
-          nvidiaDriverRoot: /usr/local/glibc
+          nvidiaDriverRoot: /driver-root
           nvidiaDevRoot: /
           plugin:
             passDeviceSpecs: true
