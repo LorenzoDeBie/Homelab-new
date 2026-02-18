@@ -77,6 +77,13 @@ resource "proxmox_vm_qemu" "talos_control_planes" {
 
   # Start the VM after creation
   vm_state = "running"
+
+  lifecycle {
+    ignore_changes = [
+      disks["ide"],
+      startup_shutdown
+    ]
+  }
 }
 
 # Talos worker VMs
@@ -153,4 +160,11 @@ resource "proxmox_vm_qemu" "talos_workers" {
 
   # Start the VM after creation
   vm_state = "running"
+
+  lifecycle {
+    ignore_changes = [
+      disks["ide"],
+      startup_shutdown
+    ]
+  }
 }
