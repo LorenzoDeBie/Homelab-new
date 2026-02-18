@@ -39,7 +39,7 @@ app-template:
       controller: qbittorrent
       type: LoadBalancer
       annotations:
-        io.cilium/lb-ipam-ips: "192.168.30.63"
+        io.cilium/lb-ipam-ips: "192.168.40.63"
       ports:
         bittorrent-tcp:
           port: *btport
