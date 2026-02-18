@@ -1,10 +1,6 @@
 app-template:
   controllers:
     plex:
-      pod:
-        runtimeClassName: nvidia
-        nodeSelector:
-          nvidia.com/gpu.present: "true"
       containers:
         app:
           image:
@@ -25,10 +21,8 @@ app-template:
             requests:
               cpu: 100m
               memory: 1Gi
-              nvidia.com/gpu: 1
             limits:
               memory: 8Gi
-              nvidia.com/gpu: 1
           probes:
             liveness:
               enabled: true

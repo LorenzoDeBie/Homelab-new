@@ -57,17 +57,6 @@ nodes:
     ipAddress: 192.168.40.53
     installDisk: /dev/sda
     controlPlane: false
-    nodeLabels:
-      nvidia.com/gpu.present: "true"
-    patches:
-      - |-
-        machine:
-          kernel:
-            modules:
-              - name: nvidia
-              - name: nvidia_uvm
-              - name: nvidia_drm
-              - name: nvidia_modeset
     networkInterfaces:
       - deviceSelector:
           busPath: "0*"  # First network device
@@ -82,17 +71,6 @@ nodes:
     ipAddress: 192.168.40.54
     installDisk: /dev/sda
     controlPlane: false
-    nodeLabels:
-      nvidia.com/gpu.present: "true"
-    patches:
-      - |-
-        machine:
-          kernel:
-            modules:
-              - name: nvidia
-              - name: nvidia_uvm
-              - name: nvidia_drm
-              - name: nvidia_modeset
     networkInterfaces:
       - deviceSelector:
           busPath: "0*"  # First network device
