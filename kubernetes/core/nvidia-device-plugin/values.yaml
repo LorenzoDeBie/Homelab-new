@@ -3,6 +3,15 @@ nvidia-device-plugin:
   compatWithCPUManager: true
   nodeSelector:
     nvidia.com/gpu.present: "true"
+  extraVolumes:
+    - name: nvidia-driver-root
+      hostPath:
+        path: /usr/local/glibc
+        type: Directory
+  extraVolumeMounts:
+    - name: nvidia-driver-root
+      mountPath: /usr/local/glibc
+      readOnly: true
   config:
     default: default
     map:
@@ -11,7 +20,7 @@ nvidia-device-plugin:
         flags:
           migStrategy: none
           failOnInitError: true
-          nvidiaDriverRoot: /
+          nvidiaDriverRoot: /usr/local/glibc
           nvidiaDevRoot: /
           plugin:
             passDeviceSpecs: true
