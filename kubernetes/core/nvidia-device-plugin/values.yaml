@@ -3,6 +3,7 @@ nvidia-device-plugin:
   nodeSelector:
     nvidia.com/gpu.present: "true"
   config:
+    default: default
     map:
       default: |-
         version: v1
