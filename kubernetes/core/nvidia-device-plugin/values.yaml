@@ -1,0 +1,4 @@
+nvidia-device-plugin:
+  runtimeClassName: nvidia
+  nodeSelector:
+    nvidia.com/gpu.present: "true"
