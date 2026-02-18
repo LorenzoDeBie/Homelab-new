@@ -1,5 +1,6 @@
 nvidia-device-plugin:
   runtimeClassName: nvidia
+  compatWithCPUManager: true
   nodeSelector:
     nvidia.com/gpu.present: "true"
   config:
