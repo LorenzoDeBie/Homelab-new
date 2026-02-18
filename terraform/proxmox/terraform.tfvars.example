@@ -23,6 +23,59 @@ vm_storage   = "local-lvm"
 vm_bridge    = "vmbr0"
 vm_vlan_tag  = 30     # Set to -1 if not using VLANs
 
+# Additional Control Plane Nodes Configuration
+control_plane_nodes = {
+  talos_cp02 = {
+    proxmox_node = "pve-lenovo"
+    vm_id        = 204
+    vm_name      = "talos-cp02"
+    vm_cores     = 2
+    vm_memory    = 4096
+    vm_disk_size = 60
+    vm_storage   = "data-zfs"
+    vm_bridge    = "vmbr0"
+    vm_vlan_tag  = 40
+  }
+}
+
+# Worker Nodes Configuration
+# Add one entry per worker VM
+worker_nodes = {
+  talos_wk01 = {
+    proxmox_node = "pve-beelink"
+    vm_id        = 201
+    vm_name      = "talos-wk01"
+    vm_cores     = 4
+    vm_memory    = 12288
+    vm_disk_size = 100
+    vm_storage   = "data-zfs"
+    vm_bridge    = "vmbr0"
+    vm_vlan_tag  = 40
+  }
+  talos_wk02 = {
+    proxmox_node = "pve-lenovo"
+    vm_id        = 202
+    vm_name      = "talos-wk02"
+    vm_cores     = 4
+    vm_memory    = 12288
+    vm_disk_size = 100
+    vm_storage   = "data-zfs"
+    vm_bridge    = "vmbr0"
+    vm_vlan_tag  = 40
+  }
+  talos_wk03 = {
+    proxmox_node = "pve-asus"
+    vm_id        = 203
+    vm_name      = "talos-wk03"
+    vm_cores     = 4
+    vm_memory    = 12288
+    vm_disk_size = 100
+    vm_storage   = "data-zfs"
+    vm_bridge    = "vmbr0"
+    vm_vlan_tag  = 40
+  }
+}
+
 # Talos ISO
 # IMPORTANT: The Telmate provider doesn't support downloading ISOs.
 # You must manually upload the Talos ISO to Proxmox before running terraform.

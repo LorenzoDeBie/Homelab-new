@@ -1,14 +1,19 @@
-output "vm_id" {
-  description = "The VM ID"
-  value       = proxmox_vm_qemu.talos.vmid
+output "worker_vm_ids" {
+  description = "Worker VM IDs keyed by worker name"
+  value       = { for name, vm in proxmox_vm_qemu.talos_workers : name => vm.vmid }
 }
 
-output "vm_name" {
-  description = "The VM name"
-  value       = proxmox_vm_qemu.talos.name
+output "worker_vm_nodes" {
+  description = "Worker target nodes keyed by worker name"
+  value       = { for name, vm in proxmox_vm_qemu.talos_workers : name => vm.target_node }
 }
 
-output "vm_node" {
-  description = "The Proxmox node the VM is running on"
-  value       = proxmox_vm_qemu.talos.target_node
+output "control_plane_vm_ids" {
+  description = "Additional control plane VM IDs keyed by name"
+  value       = { for name, vm in proxmox_vm_qemu.talos_control_planes : name => vm.vmid }
+}
+
+output "control_plane_vm_nodes" {
+  description = "Additional control plane target nodes keyed by name"
+  value       = { for name, vm in proxmox_vm_qemu.talos_control_planes : name => vm.target_node }
 }

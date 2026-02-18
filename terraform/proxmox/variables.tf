@@ -76,3 +76,35 @@ variable "talos_iso_path" {
   type        = string
   default     = "local:iso/talos-v1.12.1-amd64.iso"
 }
+
+variable "worker_nodes" {
+  description = "Map of Talos worker node VM definitions"
+  type = map(object({
+    proxmox_node = string
+    vm_id        = number
+    vm_name      = string
+    vm_cores     = number
+    vm_memory    = number
+    vm_disk_size = number
+    vm_storage   = string
+    vm_bridge    = string
+    vm_vlan_tag  = number
+  }))
+  default = {}
+}
+
+variable "control_plane_nodes" {
+  description = "Map of additional Talos control plane node VM definitions"
+  type = map(object({
+    proxmox_node = string
+    vm_id        = number
+    vm_name      = string
+    vm_cores     = number
+    vm_memory    = number
+    vm_disk_size = number
+    vm_storage   = string
+    vm_bridge    = string
+    vm_vlan_tag  = number
+  }))
+  default = {}
+}
