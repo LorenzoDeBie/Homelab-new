@@ -2,3 +2,16 @@ nvidia-device-plugin:
   runtimeClassName: nvidia
   nodeSelector:
     nvidia.com/gpu.present: "true"
+  config:
+    map:
+      default: |-
+        version: v1
+        flags:
+          migStrategy: none
+          failOnInitError: true
+          nvidiaDriverRoot: /
+          nvidiaDevRoot: /
+          plugin:
+            passDeviceSpecs: true
+            deviceListStrategy:
+              - volume-mounts
