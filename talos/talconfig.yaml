@@ -5,45 +5,82 @@
 clusterName: homelab
 talosVersion: v1.12.2
 kubernetesVersion: v1.35.0
-endpoint: https://192.168.30.50:6443
+endpoint: https://192.168.40.51:6443
 
-# Allow workloads on control plane (single node cluster)
-allowSchedulingOnControlPlanes: true
+# Keep workloads off control plane now that workers exist
+allowSchedulingOnControlPlanes: false
 
 # Use Cilium as CNI (disable default Flannel)
 cniConfig:
   name: none
 
 additionalApiServerCertSans:
-  - 192.168.30.50
+  - 192.168.40.51
   - talos.int.lorenzodebie.be
 
 additionalMachineCertSans:
-  - 192.168.30.50
+  - 192.168.40.51
   - talos.int.lorenzodebie.be
 
 nodes:
-  - hostname: talos-cp01
-    ipAddress: 192.168.30.50
+  - hostname: talos-cp02
+    ipAddress: 192.168.40.51
     installDisk: /dev/sda
     controlPlane: true
     networkInterfaces:
-      # Network interface configuration with dual IPs
-      # Primary IP (192.168.30.50) is used for Kubernetes API endpoint
-      # Secondary IP (192.168.30.51) is used for kubelet node IP
-      # This is required because Talos excludes the cluster endpoint IP from kubelet
       - deviceSelector:
           busPath: "0*"  # First network device
         dhcp: false
         addresses:
-          - 192.168.30.50/24  # Primary: Kubernetes API endpoint
-          - 192.168.30.51/24  # Secondary: Kubelet node IP (for port-forward, etc.)
+          - 192.168.40.51/24
         routes:
           - network: 0.0.0.0/0
-            gateway: 192.168.30.1
+            gateway: 192.168.40.1
         mtu: 1500
         vip:
-          ip: 192.168.30.50  # Same as node IP for single node
+          ip: 192.168.40.51
+  - hostname: talos-wk01
+    ipAddress: 192.168.40.52
+    installDisk: /dev/sda
+    controlPlane: false
+    networkInterfaces:
+      - deviceSelector:
+          busPath: "0*"  # First network device
+        dhcp: false
+        addresses:
+          - 192.168.40.52/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.40.1
+        mtu: 1500
+  - hostname: talos-wk02
+    ipAddress: 192.168.40.53
+    installDisk: /dev/sda
+    controlPlane: false
+    networkInterfaces:
+      - deviceSelector:
+          busPath: "0*"  # First network device
+        dhcp: false
+        addresses:
+          - 192.168.40.53/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.40.1
+        mtu: 1500
+  - hostname: talos-wk03
+    ipAddress: 192.168.40.54
+    installDisk: /dev/sda
+    controlPlane: false
+    networkInterfaces:
+      - deviceSelector:
+          busPath: "0*"  # First network device
+        dhcp: false
+        addresses:
+          - 192.168.40.54/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.40.1
+        mtu: 1500
 
 controlPlane:
   patches:
@@ -88,12 +125,10 @@ controlPlane:
         kubelet:
           extraArgs:
             rotate-server-certificates: "true"
-          # Force kubelet to use secondary IP (required for single-node clusters)
-          # Without this, kubelet has no valid node IP since Talos excludes
-          # the cluster endpoint IP (192.168.30.50) from node IP selection
+          # Restrict kubelet node IP selection to the control-plane node IP.
           nodeIP:
             validSubnets:
-              - 192.168.30.51/32
+              - 192.168.40.51/32
           extraMounts:
             # Mount for NFS
             - destination: /var/mnt
@@ -112,3 +147,35 @@ controlPlane:
               - os:admin
             allowedKubernetesNamespaces:
               - system-upgrade
+
+worker:
+  patches:
+    - |-
+      machine:
+        # Required sysctls for Cilium
+        sysctls:
+          net.core.somaxconn: "65535"
+          net.core.rmem_max: "2500000"
+          net.core.wmem_max: "2500000"
+        # Time sync
+        time:
+          servers:
+            - time.cloudflare.com
+        # Nameservers (Pi-hole)
+        network:
+          nameservers:
+            - 192.168.30.45
+            - 192.168.30.5
+        # Kubelet configuration
+        kubelet:
+          extraArgs:
+            rotate-server-certificates: "true"
+          extraMounts:
+            # Mount for NFS
+            - destination: /var/mnt
+              type: bind
+              source: /var/mnt
+              options:
+                - bind
+                - rshared
+                - rw
