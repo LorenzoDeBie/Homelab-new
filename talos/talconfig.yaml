@@ -3,8 +3,8 @@
 # Docs: https://budimanjojo.github.io/talhelper/latest/
 
 clusterName: homelab
-talosVersion: v1.12.2
-kubernetesVersion: v1.35.0
+talosVersion: v1.12.4
+kubernetesVersion: v1.35.1
 endpoint: https://192.168.40.51:6443
 
 # Keep workloads off control plane now that workers exist
@@ -37,8 +37,11 @@ nodes:
           - network: 0.0.0.0/0
             gateway: 192.168.40.1
         mtu: 1500
-        vip:
-          ip: 192.168.40.51
+    schematic:
+      customization:
+        systemExtensions:
+          officialExtensions:
+              - siderolabs/qemu-guest-agent
   - hostname: talos-wk01
     ipAddress: 192.168.40.52
     installDisk: /dev/sda
@@ -53,6 +56,11 @@ nodes:
           - network: 0.0.0.0/0
             gateway: 192.168.40.1
         mtu: 1500
+    schematic:
+      customization:
+        systemExtensions:
+          officialExtensions:
+              - siderolabs/qemu-guest-agent
   - hostname: talos-wk02
     ipAddress: 192.168.40.53
     installDisk: /dev/sda
@@ -67,6 +75,11 @@ nodes:
           - network: 0.0.0.0/0
             gateway: 192.168.40.1
         mtu: 1500
+    schematic:
+      customization:
+        systemExtensions:
+          officialExtensions:
+              - siderolabs/qemu-guest-agent
   - hostname: talos-wk03
     ipAddress: 192.168.40.54
     installDisk: /dev/sda
@@ -81,7 +94,11 @@ nodes:
           - network: 0.0.0.0/0
             gateway: 192.168.40.1
         mtu: 1500
-
+    schematic:
+      customization:
+        systemExtensions:
+          officialExtensions:
+              - siderolabs/qemu-guest-agent
 controlPlane:
   patches:
     - |-
