@@ -67,7 +67,7 @@ spec:
                   replacement   = "$1/$2"
                 }
 
-                # Fallback service name to container, then override from common pod labels when present.
+                // Fallback app to container, then override from common pod labels when present.
                 rule {
                   source_labels = ["__meta_kubernetes_pod_container_name"]
                   regex         = "(.+)"
