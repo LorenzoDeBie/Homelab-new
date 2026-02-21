@@ -1,0 +1,91 @@
+# Alloy - Log collector for Loki (Promtail replacement)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: alloy
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://grafana.github.io/helm-charts
+    chart: alloy
+    targetRevision: "*"
+    helm:
+      valuesObject:
+        controller:
+          type: daemonset
+
+        # Tolerate Talos control plane
+        tolerations:
+          - operator: Exists
+
+        serviceMonitor:
+          enabled: true
+
+        alloy:
+          mounts:
+            varlog: true
+
+          configMap:
+            create: true
+            content: |-
+              logging {
+                level  = "info"
+                format = "logfmt"
+              }
+
+              local.file_match "kubernetes_logs" {
+                path_targets = [
+                  {
+                    __path__ = "/var/log/pods/*/*/*.log",
+                    job      = "kubernetes-pods",
+                  },
+                ]
+              }
+
+              loki.source.file "kubernetes_logs" {
+                targets    = local.file_match.kubernetes_logs.targets
+                forward_to = [loki.process.kubernetes_logs.receiver]
+              }
+
+              loki.process "kubernetes_logs" {
+                stage.cri {}
+
+                stage.regex {
+                  source     = "filename"
+                  expression = ".*/(?P<namespace>[^_]+)_(?P<pod>[^_]+)_[^/]+/(?P<container>[^/]+)/[0-9]+\\.log$"
+                }
+
+                stage.labels {
+                  values = {
+                    namespace = "",
+                    pod       = "",
+                    container = "",
+                  }
+                }
+
+                forward_to = [loki.write.default.receiver]
+              }
+
+              loki.write "default" {
+                endpoint {
+                  url = "http://loki.observability.svc.cluster.local:3100/loki/api/v1/push"
+                }
+
+                external_labels = {
+                  cluster = "homelab",
+                }
+              }
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
