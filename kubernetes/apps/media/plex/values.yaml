@@ -1,6 +1,9 @@
 app-template:
   controllers:
     plex:
+      pod:
+        nodeSelector:
+          kubernetes.io/hostname: talos-wk01
       containers:
         app:
           image:
@@ -21,8 +24,10 @@ app-template:
             requests:
               cpu: 2000m
               memory: 4Gi
+              gpu.intel.com/i915: 1
             limits:
               memory: 8Gi
+              gpu.intel.com/i915: 1
           probes:
             liveness:
               enabled: true
