@@ -1,2 +1,4 @@
 intel-device-plugins-gpu:
   nodeFeatureRule: false
+  nodeSelector:
+    kubernetes.io/hostname: talos-wk01
