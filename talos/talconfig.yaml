@@ -4,7 +4,7 @@
 
 clusterName: homelab
 talosVersion: v1.12.4
-kubernetesVersion: v1.35.1
+kubernetesVersion: v1.35.2
 endpoint: https://192.168.40.51:6443
 
 # Keep workloads off control plane now that workers exist
@@ -37,6 +37,8 @@ nodes:
           - network: 0.0.0.0/0
             gateway: 192.168.40.1
         mtu: 1500
+    machineSpec:
+      mode: nocloud
     schematic:
       customization:
         systemExtensions:
@@ -56,11 +58,21 @@ nodes:
           - network: 0.0.0.0/0
             gateway: 192.168.40.1
         mtu: 1500
+    machineSpec:
+      mode: nocloud
     schematic:
       customization:
         systemExtensions:
           officialExtensions:
+              - siderolabs/i915
               - siderolabs/qemu-guest-agent
+    patches:
+      - |-
+        machine:
+          kubelet:
+            extraArgs:
+              node-labels: "intel.feature.node.kubernetes.io/gpu=true"
+    
   - hostname: talos-wk02
     ipAddress: 192.168.40.53
     installDisk: /dev/sda
@@ -75,6 +87,8 @@ nodes:
           - network: 0.0.0.0/0
             gateway: 192.168.40.1
         mtu: 1500
+    machineSpec:
+      mode: nocloud
     schematic:
       customization:
         systemExtensions:
@@ -94,6 +108,8 @@ nodes:
           - network: 0.0.0.0/0
             gateway: 192.168.40.1
         mtu: 1500
+    machineSpec:
+      mode: nocloud
     schematic:
       customization:
         systemExtensions:
