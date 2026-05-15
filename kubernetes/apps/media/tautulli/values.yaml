@@ -5,7 +5,7 @@ app-template:
         app:
           image:
             repository: lscr.io/linuxserver/tautulli
-            tag: latest@sha256:9f2f94ca63cad468f0a80d4435ff63857195a66b057065995bbeef80a92e8058
+            tag: latest@sha256:fc429ca6a5e445135f0a7f839f4ecdc7a7ab51ef47fedc86a22b4b89c11279c0
           env:
             TZ: Europe/Brussels
             PUID: "3001"
