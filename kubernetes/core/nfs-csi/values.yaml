@@ -2,6 +2,15 @@ csi-driver-nfs:
   controller:
     replicas: 1
     enableSnapshotter: false  # Disable csi-snapshotter sidecar - requires CRDs we don't have installed
+
+  node:
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: node-role.kubernetes.io/control-plane
+              operator: DoesNotExist
   
   storageClass:
     create: false  # We'll create our own StorageClasses
