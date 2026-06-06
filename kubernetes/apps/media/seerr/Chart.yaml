@@ -6,6 +6,6 @@ version: 1.0.0
 appVersion: "latest"
 
 dependencies:
-  - name: seerr
+  - name: seerr-chart
     version: 3.6.0
-    repository: oci://ghcr.io/seerr-team/seerr/seerr-chart
+    repository: oci://ghcr.io/seerr-team/seerr
