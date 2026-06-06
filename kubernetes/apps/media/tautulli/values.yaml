@@ -5,7 +5,7 @@ app-template:
         app:
           image:
             repository: lscr.io/linuxserver/tautulli
-            tag: v2.17.1-ls232
+            tag: v2.17.1-ls232@sha256:8e1a0d8104422f646c3e89d9b261b0507dc664bd6764baaea0ff0a5718f83b94
           env:
             TZ: Europe/Brussels
             PUID: "3001"
