@@ -3,9 +3,9 @@ name: authentik-umbrella
 description: Authentik identity provider with HTTPRoute for internal access
 type: application
 version: 1.0.0
-appVersion: "2026.2.3"
+appVersion: "2026.5.2"
 
 dependencies:
   - name: authentik
-    version: 2026.2.3
+    version: 2026.5.2
     repository: https://charts.goauthentik.io
