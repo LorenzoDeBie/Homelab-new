@@ -16,6 +16,8 @@ config:
   persistence:
     # -- Size of persistent disk
     size: 5Gi
+    # -- Storage class for the PVC. Set to "-" to disable dynamic provisioning. Uses default storage class if no value is provided
+    storageClass: 'nfs-config'
 
 ingress:
   enabled: false
