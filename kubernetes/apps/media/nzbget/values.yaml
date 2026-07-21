@@ -5,7 +5,7 @@ app-template:
         app:
           image:
             repository: lscr.io/linuxserver/nzbget
-            tag: v24.8-ls192@sha256:101cf1980074f227ff0339c4b18a5a9955344e827d0757afab7b20a1202bf700
+            tag: v26.2-ls254@sha256:87eba87ec46982b003ab1f54cfabd962c5c5e95cb9eb2069cbec7b6370d0784b
           env:
             TZ: Europe/Brussels
             PUID: "3001"
