@@ -376,6 +376,7 @@ kubernetes/core/authentik/secrets.sops.yaml
 - Radarr: https://radarr.int.lorenzodebie.be
 - Prowlarr: https://prowlarr.int.lorenzodebie.be
 - qBittorrent: https://qbittorrent.int.lorenzodebie.be
+- NZBGet: https://nzbget.int.lorenzodebie.be
 - Authentik: https://auth.int.lorenzodebie.be
 
 ## Maintenance
