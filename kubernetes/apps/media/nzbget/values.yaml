@@ -1,0 +1,54 @@
+app-template:
+  controllers:
+    nzbget:
+      containers:
+        app:
+          image:
+            repository: lscr.io/linuxserver/nzbget
+            tag: v24.8-ls192@sha256:101cf1980074f227ff0339c4b18a5a9955344e827d0757afab7b20a1202bf700
+          env:
+            TZ: Europe/Brussels
+            PUID: "3001"
+            PGID: "3001"
+            NZBGET_PORT: &port 6789
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
+            startup:
+              enabled: true
+              spec:
+                failureThreshold: 30
+                periodSeconds: 5
+
+  service:
+    app:
+      controller: nzbget
+      ports:
+        http:
+          port: *port
+
+  persistence:
+    config:
+      enabled: true
+      type: persistentVolumeClaim
+      storageClass: nfs-config
+      accessMode: ReadWriteOnce
+      size: 1Gi
+
+    # Shared media volume for hardlink support with the *arr apps
+    # Configure in NZBGet UI (Settings > Paths):
+    #   MainDir: /media/usenet
+    media:
+      enabled: true
+      type: persistentVolumeClaim
+      existingClaim: media
+      globalMounts:
+        - path: /media
