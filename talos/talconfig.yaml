@@ -159,12 +159,17 @@ controlPlane:
             validSubnets:
               - 192.168.40.51/32
           extraMounts:
-            # Mount for NFS
+            # Mount for NFS and for Talos user volumes under /var/mnt.
+            # rbind, not bind: a plain bind mount does not carry submounts, so
+            # a user volume already mounted at boot (before kubelet starts) is
+            # invisible to kubelet, which then writes to the bare directory on
+            # the EPHEMERAL partition instead. rshared only helps for mounts
+            # created after kubelet is running.
             - destination: /var/mnt
               type: bind
               source: /var/mnt
               options:
-                - bind
+                - rbind
                 - rshared
                 - rw
         # Features
@@ -200,11 +205,16 @@ worker:
           extraArgs:
             rotate-server-certificates: "true"
           extraMounts:
-            # Mount for NFS
+            # Mount for NFS and for Talos user volumes under /var/mnt.
+            # rbind, not bind: a plain bind mount does not carry submounts, so
+            # a user volume already mounted at boot (before kubelet starts) is
+            # invisible to kubelet, which then writes to the bare directory on
+            # the EPHEMERAL partition instead. rshared only helps for mounts
+            # created after kubelet is running.
             - destination: /var/mnt
               type: bind
               source: /var/mnt
               options:
-                - bind
+                - rbind
                 - rshared
                 - rw
