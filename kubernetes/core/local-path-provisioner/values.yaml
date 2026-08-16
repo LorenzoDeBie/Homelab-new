@@ -1,0 +1,41 @@
+local-path-provisioner:
+  storageClass:
+    create: true
+    name: local-path
+    defaultClass: false
+    # "local" (not "hostPath") so provisioned PVs carry node affinity and the
+    # scheduler refuses to place a pod on a node that lacks the data.
+    defaultVolumeType: local
+    # WaitForFirstConsumer: bind only once the pod is scheduled, so the PV
+    # lands on the node the workload actually runs on.
+    volumeBindingMode: WaitForFirstConsumer
+    # Retain: these volumes hold irreplaceable app state (Plex library,
+    # watch history, metadata). A deleted PVC must not erase it.
+    reclaimPolicy: Retain
+    pathPattern: "{{ .PVC.Namespace }}-{{ .PVC.Name }}"
+
+  # Only talos-wk01 has the dedicated SSD-backed disk (/dev/sdb) surfaced by
+  # Talos as the "local-path" user volume at /var/mnt/local-path.
+  # Every other node refuses to provision (empty paths) rather than silently
+  # falling back to the Talos EPHEMERAL partition on the system disk.
+  nodePathMap:
+    - node: talos-wk01
+      paths:
+        - /var/mnt/local-path
+    - node: DEFAULT_PATH_FOR_NON_LISTED_NODES
+      paths: []
+
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
+
+  helperPod:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 16Mi
+      limits:
+        memory: 64Mi

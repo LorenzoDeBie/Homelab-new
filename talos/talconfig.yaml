@@ -72,7 +72,21 @@ nodes:
           kubelet:
             extraArgs:
               node-labels: "intel.feature.node.kubernetes.io/gpu=true"
-    
+      # Dedicated SSD-backed disk (/dev/sdb, 107GB on data-zfs) for local-path-provisioner.
+      # Backs latency-sensitive SQLite workloads (Plex) that stall on NFS.
+      # Talos mounts user volumes at /var/mnt/<name>.
+      - |-
+        apiVersion: v1alpha1
+        kind: UserVolumeConfig
+        name: local-path
+        provisioning:
+          diskSelector:
+            match: '!system_disk && disk.transport == "virtio"'
+          minSize: 90GB
+          grow: true
+        filesystem:
+          type: xfs
+
   - hostname: talos-wk02
     ipAddress: 192.168.40.53
     installDisk: /dev/sda
