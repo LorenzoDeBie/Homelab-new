@@ -117,6 +117,17 @@ resource "proxmox_vm_qemu" "talos_workers" {
   # passthrough; without it Plex loses hardware transcoding.
   args = each.value.vm_args
 
+  # PCI passthrough. id = 0 corresponds to hostpci0, which is what vm_args
+  # above refers to - the two must be set together or the VM will not start.
+  dynamic "pci" {
+    for_each = each.value.vm_hostpci != null ? [each.value.vm_hostpci] : []
+    content {
+      id     = 0
+      raw_id = pci.value
+      pcie   = true
+    }
+  }
+
   # CPU Configuration
   cpu {
     cores   = each.value.vm_cores

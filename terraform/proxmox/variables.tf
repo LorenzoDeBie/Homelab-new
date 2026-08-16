@@ -98,6 +98,14 @@ variable "worker_nodes" {
     # Raw QEMU args, e.g. the Intel IGD OpRegion flag required for iGPU
     # passthrough. Declared here so Terraform does not strip it on apply.
     vm_args = optional(string)
+
+    # PCI device to pass through as hostpci0, e.g. "0000:00:02.0" for an Intel
+    # iGPU. This MUST be declared rather than set on the hypervisor: the
+    # provider writes the full device list from state on every in-place update,
+    # so a device it does not know about is removed. That is exactly how
+    # talos-wk01 lost its iGPU on 2026-08-16 and failed to boot, because
+    # vm_args still referenced the hostpci0 that had just been stripped.
+    vm_hostpci = optional(string)
   }))
   default = {}
 }
