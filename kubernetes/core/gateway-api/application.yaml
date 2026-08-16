@@ -11,7 +11,12 @@ spec:
   project: default
   source:
     repoURL: https://github.com/kubernetes-sigs/gateway-api
-    targetRevision: v1.4.1
+    # Pinned to the Gateway API version Cilium expects. Cilium v1.20 requires
+    # the TLSRoute CRD and ReferenceGrant v1, both of which only reached the
+    # standard channel in v1.6. On older CRDs the operator's Gateway API
+    # controller refuses to start, which silently disables Gateway secret sync
+    # and leaves the HTTPS listener without a certificate.
+    targetRevision: v1.6.1
     path: config/crd/standard
   destination:
     server: https://kubernetes.default.svc
