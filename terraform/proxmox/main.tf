@@ -21,6 +21,10 @@ resource "proxmox_vm_qemu" "talos_control_planes" {
   # in talos/talconfig.yaml
   agent = 1
 
+  # These VMs are IPv4-only on VLAN 40. Without this the provider stalls on
+  # every plan waiting for an IPv6 address that never arrives.
+  skip_ipv6 = true
+
   # CPU Configuration
   cpu {
     cores   = each.value.vm_cores
@@ -76,8 +80,8 @@ resource "proxmox_vm_qemu" "talos_control_planes" {
   # SCSI Controller
   scsihw = "virtio-scsi-single"
 
-  # Start the VM after creation
-  vm_state = "running"
+  # Start the VM after creation. power_state supersedes the deprecated vm_state.
+  power_state = "running"
 
   lifecycle {
     ignore_changes = [
@@ -104,6 +108,10 @@ resource "proxmox_vm_qemu" "talos_workers" {
   # QEMU Guest Agent - provided by the siderolabs/qemu-guest-agent extension
   # in talos/talconfig.yaml
   agent = 1
+
+  # These VMs are IPv4-only on VLAN 40. Without this the provider stalls on
+  # every plan waiting for an IPv6 address that never arrives.
+  skip_ipv6 = true
 
   # Raw QEMU args. talos-wk01 needs the Intel IGD OpRegion flag for iGPU
   # passthrough; without it Plex loses hardware transcoding.
@@ -176,8 +184,8 @@ resource "proxmox_vm_qemu" "talos_workers" {
   # SCSI Controller
   scsihw = "virtio-scsi-single"
 
-  # Start the VM after creation
-  vm_state = "running"
+  # Start the VM after creation. power_state supersedes the deprecated vm_state.
+  power_state = "running"
 
   lifecycle {
     ignore_changes = [
