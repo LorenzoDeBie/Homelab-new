@@ -1,5 +1,14 @@
 # Plex Config Migration - NFS HDD to Local SSD
 
+> **Status: COMPLETED 2026-08-16.** Total Plex downtime ~35 minutes, of which
+> 14 was the data copy. Verified after cutover: `/config` is `/dev/sdb1` (xfs),
+> `du` on the config tree dropped from >120s to 1s, machineIdentifier and
+> claimed status preserved, 92 movies / 31 shows / 2852 episodes / 413 watch
+> history rows / 44 accounts all intact.
+>
+> Lessons recorded in "What actually happened" at the bottom - read that before
+> reusing this runbook.
+
 ## Problem
 Plex stores its library in SQLite (`com.plexapp.plugins.library.db` 47MB,
 `com.plexapp.plugins.library.blobs.db` 119MB, plus `-wal`/`-shm`). The config PVC lives on
@@ -126,6 +135,66 @@ after the cutover is lost on rollback.
 
 ---
 
+## What actually happened
+
+Five things diverged from the plan above. Fix the runbook before reusing it.
+
+### 1. Suspend both ArgoCD apps, not just `plex`
+The `apps` root app-of-apps has `selfHeal: true` and reverts a suspended child
+within minutes. Both `apps` and `plex` must be suspended, or the sync policy
+change has to go through Git.
+
+### 2. Apply the Talos change surgically, not with the full config
+`talosctl apply-config` with the talhelper-generated file also carried unrelated
+drift: the installer image would have flipped from `metal-installer:v1.12.4` to
+`nocloud-installer:v1.12.5`, changing future upgrade behaviour. Used instead:
+
+```bash
+talosctl --nodes 192.168.40.52 patch machineconfig --patch @uservolume.yaml
+```
+
+**This drift is still present.** The repo and the running node disagree about
+the installer image. Worth reconciling deliberately, separately.
+
+### 3. `pathPattern` was rejected, twice
+local-path-provisioner requires any `pathPattern` to start with
+`{{ .PVC.Namespace }}/{{ .PVC.Name }}/` *and* carry a further path segment.
+Both `namespace-name` and `namespace/name` were rejected. Dropped it; the
+default naming (`pvc-<uid>_<namespace>_<name>`) needs no configuration.
+
+### 4. StorageClass.parameters is immutable
+Changing it makes ArgoCD retry a forbidden patch forever. The chart's
+`storageClass.annotations` now carries `argocd.argoproj.io/sync-options:
+Replace=true`.
+
+**Worse: ArgoCD does not detect a *removed* key in `parameters` as a diff.** It
+reported `Synced` while the live StorageClass still held the stale value. The
+StorageClass had to be deleted by hand to force a clean recreate. This is a
+general footgun in this repo, not specific to this chart - any change that only
+removes a field can show as Synced while the cluster disagrees with Git.
+
+After changing the StorageClass, restart the provisioner: it caches the class
+and keeps using the old parameters otherwise.
+
+### 5. Serial rsync was ~20x too slow
+`rsync -aHAX` over NFS managed 174MB in 9 minutes - a ~3.5 hour projection. Two
+causes: `-A` (ACLs) and `-X` (xattrs) each add per-file round-trips, and the
+workload is latency-bound, not bandwidth-bound. Replaced with `rsync -a` plus
+8-way parallelism over each heavy tree's immediate children. Copy finished in 14
+minutes. See the appendix job.
+
+Note `du`-based progress via the kubelet stats API is unreliable for `local`
+volumes - it reported 2.13GB when the real figure was 174MB. Measure with
+`kubectl exec ... du -sh` against the target instead.
+
+### Rollback is still available
+The pre-migration copy is untouched on the NAS at
+`/mnt/main-hdd-raid1/k8s-config/media/plex`, and PV
+`pvc-2a24d9fe-4a30-4269-84a8-fde6d6fadee0` is `Released`, not deleted. Delete
+both once you are confident, to reclaim ~4GB.
+
+---
+
 ## Appendix: plex-migrate.yaml
 
 ```yaml
@@ -200,11 +269,35 @@ spec:
             - sh
             - -euxc
             - |
-              apk add --no-cache rsync
-              rsync -aAX --numeric-ids --info=progress2 /src/ /dst/
-              chown -R 3001:3001 /dst
-              echo "--- source ---"; du -sh /src
-              echo "--- target ---"; du -sh /dst
+              apk add --no-cache rsync findutils
+              SRC=/src
+              DST=/dst
+              PMS="Library/Application Support/Plex Media Server"
+
+              # No -A/-X: ACL and xattr preservation costs extra NFS round-trips
+              # per file, and Plex needs neither (ownership is reset below).
+              RS="rsync -a --numeric-ids"
+
+              # Pass 1: everything except the heavy trees. Small and sequential.
+              $RS \
+                --exclude="/$PMS/Metadata/" \
+                --exclude="/$PMS/Media/" \
+                --exclude="/$PMS/Cache/" \
+                "$SRC/" "$DST/"
+              echo "=== pass 1 done ==="
+
+              # Pass 2: heavy trees, parallel over immediate children. This is a
+              # latency-bound workload, so concurrency is what buys throughput.
+              for top in Metadata Media Cache; do
+                [ -d "$SRC/$PMS/$top" ] || continue
+                mkdir -p "$DST/$PMS/$top"
+                ls -1 "$SRC/$PMS/$top" \
+                  | xargs -P 8 -I{} $RS "$SRC/$PMS/$top/{}" "$DST/$PMS/$top/"
+                echo "=== $top done ==="
+              done
+
+              chown -R 3001:3001 "$DST"
+              echo "=== TARGET ==="; du -sh "$DST"
           volumeMounts:
             - name: src
               mountPath: /src
