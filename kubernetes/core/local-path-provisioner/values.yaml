@@ -12,12 +12,13 @@ local-path-provisioner:
     # Retain: these volumes hold irreplaceable app state (Plex library,
     # watch history, metadata). A deleted PVC must not erase it.
     reclaimPolicy: Retain
-    # Must start with "{{ .PVC.Namespace }}/{{ .PVC.Name }}" - the provisioner
-    # rejects any other prefix. Yields /var/mnt/local-path/media/plex.
-    pathPattern: "{{ .PVC.Namespace }}/{{ .PVC.Name }}"
+    # No pathPattern. The provisioner requires any pattern to start with
+    # "{{ .PVC.Namespace }}/{{ .PVC.Name }}/" *and* carry a further segment,
+    # so the readable two-level form is rejected. The default naming
+    # (pvc-<uid>_<namespace>_<name>) is unambiguous and needs no config.
 
-    # StorageClass.parameters is immutable, so any future change to
-    # pathPattern fails an in-place patch. Replace instead of patching.
+    # StorageClass.parameters is immutable, so changing it fails an in-place
+    # patch. Replace instead of patching.
     annotations:
       argocd.argoproj.io/sync-options: Replace=true
 
