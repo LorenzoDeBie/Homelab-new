@@ -187,6 +187,42 @@ Note `du`-based progress via the kubelet stats API is unreliable for `local`
 volumes - it reported 2.13GB when the real figure was 174MB. Measure with
 `kubectl exec ... du -sh` against the target instead.
 
+### 6. kubelet needs `rbind`, not `bind`, for /var/mnt
+The original `talconfig.yaml` mounted `/var/mnt` into kubelet with `bind`. A
+plain bind mount does not carry submounts, so a Talos user volume mounted during
+boot - before kubelet starts - is invisible to kubelet, which silently falls back
+to the bare directory on the EPHEMERAL partition.
+
+This did not show up during the migration because the user volume was created
+while the node was running: `rshared` propagates mounts made *after* kubelet
+starts. The first reboot exposed it, and Plex failed with
+`MountVolume.NewMounter initialization failed ... path does not exist`.
+
+Fixed by changing the option to `rbind`. Verified across a reboot.
+
+**Diagnostic trap:** `talosctl ls` and `talosctl usage` do not cross mount
+boundaries. Pointed at `/var/mnt/local-path` they list the empty mount *point*,
+not the mounted filesystem, which reads exactly like an empty disk. This
+produced a false "the data is gone" conclusion and an unnecessary second
+migration. To inspect a user volume's real contents, use a pod with a hostPath
+mount and run `df`/`du` inside it.
+
+### 7. iGPU passthrough flags are load-bearing and undeclared
+Terraform stripped `hostpci0` because it was configured only on the hypervisor,
+and the VM then refused to start because `args` still referenced it. The
+working config, recovered from the pve-beelink journal, is:
+
+```
+hostpci0: 00:02.0,pcie=1,x-vga=1,rombar=0
+```
+
+`x-vga=1` is essential: without it the Alder Lake-N iGPU hangs the Talos guest
+during i915 init at ~4.8s into boot. Now declared in `main.tf` as
+`primary_gpu = true` / `rombar = false`.
+
+**When a VM config is lost, search the journal before reconstructing it:**
+`journalctl | grep -i hostpci` on the Proxmox host records every `qm set`.
+
 ### Rollback is still available
 The pre-migration copy is untouched on the NAS at
 `/mnt/main-hdd-raid1/k8s-config/media/plex`, and PV

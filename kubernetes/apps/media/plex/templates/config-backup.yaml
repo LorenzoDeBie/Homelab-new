@@ -68,7 +68,13 @@ spec:
                   fi
                   echo "source looks sane (${SZ}MB), starting backup"
 
-                  rsync -a --delete --stats "$SRC/" "$DST/"
+                  # Cache/ is transient data Plex regenerates freely. It is
+                  # ~500MB of small files, and writing those to the NFS HDD is
+                  # latency-bound, so excluding it cuts most of the runtime for
+                  # no loss of recoverable state.
+                  rsync -a --delete --stats \
+                    --exclude "/Library/Application Support/Plex Media Server/Cache/" \
+                    "$SRC/" "$DST/"
 
                   echo "=== backup complete ==="
                   du -sh "$DST"
