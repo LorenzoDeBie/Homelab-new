@@ -1,0 +1,94 @@
+# Nightly backup of the Plex config volume to the NAS.
+#
+# The config lives on a single local disk on talos-wk01 for SQLite latency.
+# That disk has no redundancy and no snapshots, so it is treated as fast but
+# expendable storage; the NAS holds the durable copy.
+#
+# Destination uses the nfs-config StorageClass so the CSI driver creates the
+# subdirectory itself - no manual setup needed on the NAS.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: plex-config-backup
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs-config
+  resources:
+    requests:
+      storage: 50Gi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: plex-config-backup
+  namespace: {{ .Release.Namespace }}
+spec:
+  # 04:00 daily. Plex writes its own dated database backups around 02:03, so
+  # this runs afterwards and captures those consistent snapshots.
+  schedule: "0 4 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          # The config PVC is RWO and held by Plex. Multiple pods may mount an
+          # RWO volume only on the same node, so pin to Plex's node.
+          nodeSelector:
+            kubernetes.io/hostname: talos-wk01
+          containers:
+            - name: backup
+              image: alpine:3.22
+              command:
+                - sh
+                - -ec
+                - |
+                  apk add --no-cache rsync >/dev/null
+
+                  SRC=/config
+                  DST=/backup
+                  DB="$SRC/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db"
+
+                  # Guard against replicating a wiped source. rsync --delete
+                  # would otherwise mirror an empty config over a good backup,
+                  # which is precisely how a local-disk loss becomes permanent.
+                  if [ ! -f "$DB" ]; then
+                    echo "FATAL: library.db not found at $DB - refusing to back up"
+                    exit 1
+                  fi
+                  SZ=$(du -sm "$SRC" 2>/dev/null | cut -f1)
+                  if [ -z "$SZ" ] || [ "$SZ" -lt 100 ]; then
+                    echo "FATAL: source is only ${SZ}MB - refusing to back up"
+                    exit 1
+                  fi
+                  echo "source looks sane (${SZ}MB), starting backup"
+
+                  rsync -a --delete --stats "$SRC/" "$DST/"
+
+                  echo "=== backup complete ==="
+                  du -sh "$DST"
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                  readOnly: true
+                - name: backup
+                  mountPath: /backup
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  memory: 512Mi
+          volumes:
+            - name: config
+              persistentVolumeClaim:
+                claimName: plex
+                readOnly: true
+            - name: backup
+              persistentVolumeClaim:
+                claimName: plex-config-backup
