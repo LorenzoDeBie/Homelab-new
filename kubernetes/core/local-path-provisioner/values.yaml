@@ -12,7 +12,9 @@ local-path-provisioner:
     # Retain: these volumes hold irreplaceable app state (Plex library,
     # watch history, metadata). A deleted PVC must not erase it.
     reclaimPolicy: Retain
-    pathPattern: "{{ .PVC.Namespace }}-{{ .PVC.Name }}"
+    # Must start with "{{ .PVC.Namespace }}/{{ .PVC.Name }}" - the provisioner
+    # rejects any other prefix. Yields /var/mnt/local-path/media/plex.
+    pathPattern: "{{ .PVC.Namespace }}/{{ .PVC.Name }}"
 
   # Only talos-wk01 has the dedicated SSD-backed disk (/dev/sdb) surfaced by
   # Talos as the "local-path" user volume at /var/mnt/local-path.
