@@ -16,6 +16,11 @@ local-path-provisioner:
     # rejects any other prefix. Yields /var/mnt/local-path/media/plex.
     pathPattern: "{{ .PVC.Namespace }}/{{ .PVC.Name }}"
 
+    # StorageClass.parameters is immutable, so any future change to
+    # pathPattern fails an in-place patch. Replace instead of patching.
+    annotations:
+      argocd.argoproj.io/sync-options: Replace=true
+
   # Only talos-wk01 has the dedicated SSD-backed disk (/dev/sdb) surfaced by
   # Talos as the "local-path" user volume at /var/mnt/local-path.
   # Every other node refuses to provision (empty paths) rather than silently
