@@ -17,8 +17,9 @@ resource "proxmox_vm_qemu" "talos_control_planes" {
   # Boot from disk first, then ISO
   boot = "order=scsi0;ide2"
 
-  # QEMU Guest Agent - Talos doesn't support it
-  agent = 0
+  # QEMU Guest Agent - provided by the siderolabs/qemu-guest-agent extension
+  # in talos/talconfig.yaml
+  agent = 1
 
   # CPU Configuration
   cpu {
@@ -100,8 +101,13 @@ resource "proxmox_vm_qemu" "talos_workers" {
   # Boot from disk first, then ISO
   boot = "order=scsi0;ide2"
 
-  # QEMU Guest Agent - Talos doesn't support it
-  agent = 0
+  # QEMU Guest Agent - provided by the siderolabs/qemu-guest-agent extension
+  # in talos/talconfig.yaml
+  agent = 1
+
+  # Raw QEMU args. talos-wk01 needs the Intel IGD OpRegion flag for iGPU
+  # passthrough; without it Plex loses hardware transcoding.
+  args = each.value.vm_args
 
   # CPU Configuration
   cpu {
@@ -122,7 +128,7 @@ resource "proxmox_vm_qemu" "talos_workers" {
     efitype = "4m"
   }
 
-  # Main disk
+  # Main disk, plus an optional data disk backing local-path-provisioner
   disks {
     scsi {
       scsi0 {
@@ -132,6 +138,18 @@ resource "proxmox_vm_qemu" "talos_workers" {
           format     = "raw"
           discard    = true
           emulatessd = true
+        }
+      }
+      dynamic "scsi1" {
+        for_each = each.value.vm_data_disk_size != null ? [1] : []
+        content {
+          disk {
+            storage    = each.value.vm_data_storage
+            size       = each.value.vm_data_disk_size
+            format     = "raw"
+            discard    = true
+            emulatessd = true
+          }
         }
       }
     }

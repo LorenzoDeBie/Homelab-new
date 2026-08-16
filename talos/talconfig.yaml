@@ -108,27 +108,9 @@ nodes:
         systemExtensions:
           officialExtensions:
               - siderolabs/qemu-guest-agent
-  - hostname: talos-wk03
-    ipAddress: 192.168.40.54
-    installDisk: /dev/sda
-    controlPlane: false
-    networkInterfaces:
-      - deviceSelector:
-          busPath: "0*"  # First network device
-        dhcp: false
-        addresses:
-          - 192.168.40.54/24
-        routes:
-          - network: 0.0.0.0/0
-            gateway: 192.168.40.1
-        mtu: 1500
-    machineSpec:
-      mode: nocloud
-    schematic:
-      customization:
-        systemExtensions:
-          officialExtensions:
-              - siderolabs/qemu-guest-agent
+  # talos-wk03 (192.168.40.54) removed 2026-08-16: its host pve-asus suffered a
+  # hardware failure. The node was already absent from the cluster. Restore this
+  # block if the host is rebuilt.
 controlPlane:
   patches:
     - |-

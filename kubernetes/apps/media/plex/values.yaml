@@ -20,13 +20,18 @@ app-template:
             ALLOWED_NETWORKS: "192.168.0.0/16,10.0.0.0/8"
             # Tell Plex the URL clients use to reach it (required for hostname recognition)
             ADVERTISE_IP: "http://plex.int.lorenzodebie.be:32400,http://192.168.40.62:32400"
+          # talos-wk01 has 3950m CPU and 7.24Gi allocatable. The old request of
+          # 2000m/4Gi reserved over half the node while steady-state usage is
+          # ~4m/97Mi, and the old 8Gi limit exceeded what the node can give,
+          # letting Plex push the node into memory pressure. Transcoding runs on
+          # the iGPU, so the large CPU reservation bought nothing.
           resources:
             requests:
-              cpu: 2000m
-              memory: 4Gi
+              cpu: 500m
+              memory: 1Gi
               gpu.intel.com/i915: 1
             limits:
-              memory: 8Gi
+              memory: 6Gi
               gpu.intel.com/i915: 1
           probes:
             liveness:

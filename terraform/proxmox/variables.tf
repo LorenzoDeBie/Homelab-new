@@ -89,6 +89,15 @@ variable "worker_nodes" {
     vm_storage   = string
     vm_bridge    = string
     vm_vlan_tag  = number
+
+    # Optional second disk, surfaced in Talos as a user volume and consumed by
+    # local-path-provisioner. Omit both to give the node no data disk.
+    vm_data_disk_size = optional(number)
+    vm_data_storage   = optional(string)
+
+    # Raw QEMU args, e.g. the Intel IGD OpRegion flag required for iGPU
+    # passthrough. Declared here so Terraform does not strip it on apply.
+    vm_args = optional(string)
   }))
   default = {}
 }
