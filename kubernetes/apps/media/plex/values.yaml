@@ -25,17 +25,14 @@ app-template:
           # ~4m/97Mi, and the old 8Gi limit exceeded what the node can give,
           # letting Plex push the node into memory pressure. Transcoding runs on
           # the iGPU, so the large CPU reservation bought nothing.
-          # GPU request removed 2026-08-16: the iGPU passthrough is currently
-          # detached from talos-wk01 because the passed-through device hangs the
-          # guest kernel during i915 init. Transcoding runs in software until
-          # that is resolved. Restore both gpu.intel.com/i915 lines alongside
-          # vm_hostpci in terraform - the two must be re-enabled together.
           resources:
             requests:
               cpu: 500m
               memory: 1Gi
+              gpu.intel.com/i915: 1
             limits:
               memory: 6Gi
+              gpu.intel.com/i915: 1
           probes:
             liveness:
               enabled: true
