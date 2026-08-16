@@ -50,10 +50,14 @@ app-template:
           port: 32400
   
   persistence:
+    # Plex keeps its library in SQLite. Over NFS every lock is a network
+    # round-trip to the HDD array that also serves the media library, which
+    # stalls the server under scan/download load. This lives on the dedicated
+    # SSD-backed disk on talos-wk01 instead (see kubernetes/core/local-path-provisioner).
     config:
       enabled: true
       type: persistentVolumeClaim
-      storageClass: nfs-config
+      storageClass: local-path
       accessMode: ReadWriteOnce
       size: 50Gi
     
