@@ -119,12 +119,21 @@ resource "proxmox_vm_qemu" "talos_workers" {
 
   # PCI passthrough. id = 0 corresponds to hostpci0, which is what vm_args
   # above refers to - the two must be set together or the VM will not start.
+  #
+  # These flags are not defaults; they reproduce the configuration recorded in
+  # the pve-beelink journal on 2026-03-14, which is the last known-working one:
+  #   hostpci0: 00:02.0,pcie=1,x-vga=1,rombar=0
+  # primary_gpu (x-vga) is load-bearing. Without it the Alder Lake-N iGPU hangs
+  # the Talos guest during i915 init, at roughly 4.8s into boot. rombar must be
+  # off because the iGPU exposes no readable option ROM.
   dynamic "pci" {
     for_each = each.value.vm_hostpci != null ? [each.value.vm_hostpci] : []
     content {
-      id     = 0
-      raw_id = pci.value
-      pcie   = true
+      id          = 0
+      raw_id      = pci.value
+      pcie        = true
+      primary_gpu = true
+      rombar      = false
     }
   }
 
