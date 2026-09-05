@@ -3,8 +3,8 @@
 # Docs: https://budimanjojo.github.io/talhelper/latest/
 
 clusterName: homelab
-talosVersion: v1.12.5
-kubernetesVersion: v1.35.2
+talosVersion: v1.14.0
+kubernetesVersion: v1.37.0
 endpoint: https://192.168.40.51:6443
 
 # Keep workloads off control plane now that workers exist
