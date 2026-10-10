@@ -93,9 +93,9 @@ The kube-prometheus-stack automatically discovers and scrapes:
 |--------|----------|-------|
 | Kubernetes API Server | :6443/metrics | Built-in |
 | kubelet | :10250/metrics | Per node |
-| kube-controller-manager | :10257/metrics | Via Service |
-| kube-scheduler | :10259/metrics | Via Service |
-| etcd | :2381/metrics | Via Service |
+| kube-controller-manager | :10257/metrics | Disabled |
+| kube-scheduler | :10259/metrics | Disabled |
+| etcd | :2381/metrics | Static scrape config |
 | CoreDNS | :9153/metrics | Built-in |
 | Cilium | :9962/metrics | ServiceMonitor |
 | ArgoCD | various | ServiceMonitor |
@@ -159,39 +159,18 @@ prometheus:
 
 ### Talos-Specific Configuration
 
-Talos requires explicit endpoints for control plane components:
+etcd runs as a Talos system service, not a pod. The chart's default way to
+scrape it (a Service plus a hand-written Endpoints object) doesn't work here:
+ArgoCD excludes `Endpoints` by default, so that object is never created.
+Instead, the chart's etcd Service and ServiceMonitor are disabled and Prometheus
+scrapes etcd through `prometheus.prometheusSpec.additionalScrapeConfigs`, as job
+`kube-etcd`, at the control-plane address from `talos/talconfig.yaml`.
+`kubeEtcd.enabled` stays on so the default etcd rules and dashboard still render,
+and `EtcdTargetMissing` fires when there is no healthy etcd target.
 
-```yaml
-kubeControllerManager:
-  enabled: true
-  endpoints:
-    - 192.168.30.50  # Talos node IP
-  service:
-    port: 10257
-    targetPort: 10257
-  serviceMonitor:
-    https: true
-    insecureSkipVerify: true
-
-kubeScheduler:
-  enabled: true
-  endpoints:
-    - 192.168.30.50
-  service:
-    port: 10259
-    targetPort: 10259
-
-kubeEtcd:
-  enabled: true
-  endpoints:
-    - 192.168.30.50
-  service:
-    port: 2381
-    targetPort: 2381
-
-kubeProxy:
-  enabled: false  # Replaced by Cilium
-```
+kube-controller-manager and kube-scheduler are not scraped (`enabled: false`),
+and kube-proxy is replaced by Cilium. See
+`kubernetes/observability/kube-prometheus-stack/values.yaml`.
 
 ### Access Prometheus UI
 
@@ -654,23 +633,13 @@ kubectl top pod -n observability -l app.kubernetes.io/name=prometheus
 
 ### Missing Kubernetes Metrics
 
-For Talos, ensure control plane endpoints are correct:
+For etcd, check that the `kube-etcd` target in `additionalScrapeConfigs`
+matches the control-plane address in `talos/talconfig.yaml`, and that
+Prometheus → Status → Targets shows it up.
 
-```yaml
-kubeControllerManager:
-  endpoints:
-    - 192.168.30.50  # Your Talos node IP
-kubeScheduler:
-  endpoints:
-    - 192.168.30.50
-kubeEtcd:
-  endpoints:
-    - 192.168.30.50
-```
-
-Verify pods can reach endpoints:
+Verify pods can reach the etcd metrics port:
 
 ```bash
 kubectl run -it --rm debug --image=busybox -- \
-  wget -qO- https://192.168.30.50:10257/metrics --no-check-certificate
+  wget -qO- http://<control-plane-ip>:2381/metrics
 ```
