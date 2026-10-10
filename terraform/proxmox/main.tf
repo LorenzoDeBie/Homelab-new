@@ -83,10 +83,20 @@ resource "proxmox_vm_qemu" "talos_control_planes" {
   # Start the VM after creation. power_state supersedes the deprecated vm_state.
   power_state = "running"
 
+  # Start with the Proxmox host after a power cut (REC-1). Proxmox starts VMs
+  # on a host in ascending order and waits startup_delay seconds after each
+  # one, so a worker on the same host starts after the API server is coming
+  # up. Shutdown runs in reverse order: workers first, control plane last.
+  start_at_node_boot = true
+  startup_shutdown {
+    order            = 1
+    startup_delay    = 60
+    shutdown_timeout = -1
+  }
+
   lifecycle {
     ignore_changes = [
       disks["ide"],
-      startup_shutdown
     ]
   }
 }
@@ -207,10 +217,19 @@ resource "proxmox_vm_qemu" "talos_workers" {
   # Start the VM after creation. power_state supersedes the deprecated vm_state.
   power_state = "running"
 
+  # Start with the Proxmox host after a power cut (REC-1), after the control
+  # plane when it shares the host. Ordering is per host; a worker on another
+  # host keeps retrying until the API server answers.
+  start_at_node_boot = true
+  startup_shutdown {
+    order            = 2
+    startup_delay    = -1
+    shutdown_timeout = -1
+  }
+
   lifecycle {
     ignore_changes = [
       disks["ide"],
-      startup_shutdown
     ]
   }
 }
