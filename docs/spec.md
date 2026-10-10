@@ -5,8 +5,8 @@ it, and a status that says where things stand today. Issues and PRs reference re
 e.g. "Implements REC-1".
 
 Status values: **met**, **partial**, **planned**, **deferred** (wanted eventually, but no work
-planned; don't create tickets for it). When a PR changes a status, update it here in the same
-PR.
+planned; don't create tickets for it. A parked design may exist as a `needs-triage` issue). When
+a PR changes a status, update it here in the same PR.
 
 ## 1. Purpose and scope
 
@@ -138,6 +138,15 @@ Described by role. Concrete names, IPs and versions live in `talos/talconfig.yam
 | SEC-6 | Download client traffic leaves through a VPN, with no traffic when the VPN is down. | Client reports the VPN exit IP; stopping the VPN stops traffic. | planned |
 | SEC-7 | Guest devices on the tailnet can use the exit node only, not the home networks. | ACL test from a guest device. | planned |
 | SEC-8 | Inter-VLAN traffic is limited to what services need. The apps VLAN reaches the NAS only for NFS and DNS, and the management interfaces (Proxmox, NAS UI, IPMI) are reachable only from admin devices and the tailnet. | From a cluster pod: NFS and DNS work, Proxmox UI and IPMI are blocked. From the tailnet: management interfaces work. | deferred |
+
+When SEC-8 is picked up: move the subnet router out of the cluster first (REC-3), so a rule
+mistake can't lock out remote access, and allow DNS to both resolvers.
+
+### Performance (PERF)
+
+| ID | Requirement | Verify | Status |
+|----|-------------|--------|--------|
+| PERF-1 | The media apps' UIs stay responsive while downloads and library scans run, with their config still on shared NAS storage (not pinned to one node). | Time an app operation and a SQLite write benchmark during a download plus rescan, against a recorded baseline. | deferred (design: #190) |
 
 ### Simplicity (SIM)
 

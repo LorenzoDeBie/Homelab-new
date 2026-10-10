@@ -51,7 +51,7 @@ docs.
 | Storage classes | `kubernetes/core/nfs-csi/templates/storage.yaml` (`nfs-config`, `nfs-media`), `local-path` |
 | Dependency updates | `renovate.json5` |
 
-`README.md`, `docs/` and the untracked `plans/` are partly out of date: some still say
+`README.md`, `docs/` and `plans/` are partly out of date: some still say
 "single-node" or use the old `192.168.30.x` addresses. If docs and code disagree, the code
 wins. Fix the docs if you're touching that area anyway.
 
