@@ -92,7 +92,7 @@ Described by role. Concrete names, IPs and versions live in `talos/talconfig.yam
 
 | ID | Requirement | Verify | Status |
 |----|-------------|--------|--------|
-| REC-1 | After power returns, every host, VM and service comes back without human action within the RTO. | Breaker drill: power off at the breaker, restore, time to all-green. | planned |
+| REC-1 | After power returns, every host, VM and service comes back without human action within the RTO. | Breaker drill: power off at the breaker, restore, time to all-green. | partial |
 | REC-2 | The cluster can be rebuilt from Git, the age key and the latest etcd snapshot by following a written runbook. | Restore drill into a fresh VM, at least yearly. | planned |
 | REC-3 | Remote admin access (tailnet route to the home networks, Proxmox UI, NAS out-of-band management) works while the cluster is down. | Stop the cluster VMs, reach Proxmox and IPMI over Tailscale. | planned |
 | REC-4 | Losing the Plex host or its iGPU does not take down the rest of the cluster. | Shut down the Plex worker VM; other apps stay up. | partial |
@@ -124,7 +124,7 @@ Described by role. Concrete names, IPs and versions live in `talos/talconfig.yam
 | CHG-3 | Renovate automerges only low-risk updates, after CI passes. Core platform components (CNI, Gateway API, ArgoCD, cert-manager, Talos) need a manual merge. | Renovate config review; a core update opens a PR without merging. | planned |
 | CHG-4 | Every chart and image version is pinned. No `latest` or `*`. | Search the repo for unpinned versions. | partial |
 | CHG-5 | The Talos upgrade runbook keeps each node's system extensions. | After an upgrade, the extensions are still listed on each node. | planned |
-| CHG-6 | VM definitions, including start-at-boot and boot order, are managed in Terraform. | `terraform plan` shows no drift after a UI change is reverted. | partial |
+| CHG-6 | VM definitions, including start-at-boot and boot order, are managed in Terraform. | `terraform plan` shows no drift after a UI change is reverted. | met |
 
 ### Security (SEC)
 
