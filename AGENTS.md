@@ -99,3 +99,17 @@ cd terraform/proxmox && terraform init -backend=false && terraform validate
 ```
 
 Work on a branch, keep each PR to one concern, and say in the PR how you validated it.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in this repo's GitHub Issues (public), managed with `gh`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `GLOSSARY.md` and `docs/adr/` at the repo root, created when needed. See `docs/agents/domain.md`.
