@@ -15,18 +15,37 @@ kube-prometheus-stack:
       kubeControllerManager: false  # Disable KubeControllerManagerDown alert
       kubeScheduler: false          # Disable KubeSchedulerDown alert
   
+  # etcd runs as a Talos system service, not a pod, so it needs a static
+  # target. The chart would point a selector-less Service at a hand-written
+  # Endpoints object, but ArgoCD excludes Endpoints by default and never
+  # creates it. etcd is scraped through prometheus.additionalScrapeConfigs
+  # instead; kubeEtcd stays enabled for the etcd rules and dashboard.
   kubeEtcd:
     enabled: true
-    endpoints:
-      - 192.168.30.50
     service:
-      enabled: true
-      port: 2381
-      targetPort: 2381
-  
+      enabled: false
+    serviceMonitor:
+      enabled: false
+
   kubeProxy:
     enabled: false  # Replaced by Cilium
-  
+
+  # The default etcd rules only fire on metrics that exist. This one fires
+  # when there is no healthy etcd target at all.
+  additionalPrometheusRulesMap:
+    etcd-target:
+      groups:
+        - name: etcd-target
+          rules:
+            - alert: EtcdTargetMissing
+              expr: absent(up{job="kube-etcd"} == 1)
+              for: 10m
+              labels:
+                severity: critical
+              annotations:
+                summary: No healthy etcd scrape target
+                description: Prometheus has not scraped etcd for 10 minutes. Either the control plane is down or the kube-etcd scrape config no longer matches its address.
+
   # Grafana configuration
   grafana:
     enabled: true
@@ -179,7 +198,16 @@ kube-prometheus-stack:
       serviceMonitorSelectorNilUsesHelmValues: false
       podMonitorSelectorNilUsesHelmValues: false
       ruleSelectorNilUsesHelmValues: false
-      
+
+      # etcd metrics on the control-plane node (see kubeEtcd above). The
+      # address must match the control plane in talos/talconfig.yaml, where
+      # etcd's listen-metrics-urls opens port 2381.
+      additionalScrapeConfigs:
+        - job_name: kube-etcd
+          static_configs:
+            - targets:
+                - 192.168.40.51:2381
+
       # Resource limits
       resources:
         requests:
