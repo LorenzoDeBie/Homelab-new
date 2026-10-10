@@ -8,7 +8,8 @@ This repo is **public**. Everything you write in commits, PRs and issues is publ
 
 ## Fixed choices and non-goals
 
-These are decided. Don't propose replacing them or re-open them unless the user asks.
+These are decided. Don't propose replacing them or re-open them unless the user asks. The full
+target state, with requirement IDs and current status, is in `docs/spec.md`.
 
 - **Fixed:** Talos, Proxmox, Plex with Intel QuickSync, Tailscale for remote access, a
   Cloudflare tunnel for public apps. ArgoCD is preferred but not sacred.
