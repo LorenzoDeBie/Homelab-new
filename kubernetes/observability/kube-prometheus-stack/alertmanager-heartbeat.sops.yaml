@@ -1,0 +1,26 @@
+# Ping URL of the external dead man's switch (OBS-1). Alertmanager sends the
+# always-firing Watchdog alert here; the external check notifies the admin
+# when the pings stop.
+apiVersion: v1
+kind: Secret
+metadata:
+    name: alertmanager-heartbeat
+    namespace: observability
+type: Opaque
+stringData:
+    url: ENC[AES256_GCM,data:5XfRk4etnW3yx491QEdPhMFzZvXL,iv:3/YvPIAIUoZ8N9BzrK/cWDE+0QQdgEJ/rpWra7scN3Q=,tag:Q3Y27XPrjXFW2SYZ+yzmWg==,type:str]
+sops:
+    age:
+        - recipient: age1g6uhy72aszly2j77d0wmy4mwy5f9ezxe2w9fu2ensal4mn5uufyqqpcf8h
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBNYmI5UjdCd2Z4NjNDT3Jv
+            QysrSk9CY1Azdk9neVVFY01XNGlYVC9QN1d3ClRjeXFublltdjFTOWJsUDNLKzRX
+            dy9hQVF3OVlqUDN0UXZvd0k2NnJaOEkKLS0tIDV1SGNFZ2drWXhXZkpSa1Q3K3JR
+            Ny9RV0laNHlEV2l4b0lFTDdVK3JUSTAKDdsJUqlA1EgYcbVvTIoFaM1Vr/ed1w8c
+            CCvHRIXCW7Z69sVlyNCCpXIeNuQT3Vmbuvapy2sj5mWY8VKzn/hfZQ==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-10-10T23:52:10Z"
+    mac: ENC[AES256_GCM,data:LO8zBZZpMmNsPYs0qdkEjmSA7sFWN1I76YO+oYY4i/chK3LYnYTTFIUNFFwD5PInlcXsMgm7+LMETD271yCL8yEIgzUypsx+KYRwpxxP/vref0MB3KahmHhL1tMqRxfJJTJ5wEFuig6pVsxHTwCTsyd9aTIoFs3kMq0w67iy1yg=,iv:HfNqpCU0IzIvJKstNjyStGKDku2S9ST59J8DteZdr/0=,tag:nWjuU6+PWNw+XVz/xem9zA==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.12.2

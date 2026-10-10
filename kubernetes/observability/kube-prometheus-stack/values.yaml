@@ -223,10 +223,15 @@ kube-prometheus-stack:
         group_interval: 5m
         repeat_interval: 4h
         routes:
-          # Watchdog alert - silently drop (dead man's switch)
-          - receiver: 'null'
+          # Watchdog always fires. Send it every minute to the external dead
+          # man's switch (OBS-1), which notifies the admin when the pings stop.
+          # Never muted: an outage at night must still be noticed.
+          - receiver: 'heartbeat'
             matchers:
               - alertname="Watchdog"
+            group_wait: 0s
+            group_interval: 1m
+            repeat_interval: 1m
             continue: false
 
           # Critical alerts: faster repeat, but still muted at night
@@ -255,7 +260,10 @@ kube-prometheus-stack:
 
       # Notification receivers
       receivers:
-        - name: 'null'  # Silently drop alerts (used for Watchdog)
+        - name: 'heartbeat'
+          webhook_configs:
+            - url_file: /etc/alertmanager/secrets/alertmanager-heartbeat/url
+              send_resolved: false
         - name: 'telegram'
           telegram_configs:
             - bot_token_file: /etc/alertmanager/secrets/alertmanager-telegram/bot-token
@@ -284,9 +292,10 @@ kube-prometheus-stack:
           equal: ['alertname', 'namespace']
 
     alertmanagerSpec:
-      # Mount the Telegram secret so Alertmanager can read the bot token
+      # Mount the Telegram bot token and the heartbeat ping URL
       secrets:
         - alertmanager-telegram
+        - alertmanager-heartbeat
 
       storage:
         volumeClaimTemplate:
