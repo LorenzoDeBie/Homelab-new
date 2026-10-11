@@ -76,16 +76,16 @@ This document covers ongoing maintenance procedures including upgrades, backups,
 
 3. **Perform Upgrade**:
    ```bash
-   # Using the Talos installer image
-   talosctl --talosconfig clusterconfig/talosconfig \
-     --nodes 192.168.30.50 \
-     upgrade --image ghcr.io/siderolabs/installer:v1.9.2
+   # Prints a talosctl upgrade command per node (or only the one given with
+   # --node), each with the factory image for that node's schematic (wk01
+   # needs i915). Run them one node at a time. Never use the plain installer image.
+   talhelper gencommand upgrade
    ```
 
 4. **Monitor Upgrade**:
    ```bash
    # Watch node status
-   talosctl --nodes 192.168.30.50 health
+   talosctl --nodes <control-plane-ip> health
    
    # Watch pods
    kubectl get pods -A -w
@@ -94,7 +94,7 @@ This document covers ongoing maintenance procedures including upgrades, backups,
 5. **Verify**:
    ```bash
    # Check Talos version
-   talosctl --nodes 192.168.30.50 version
+   talosctl --nodes <control-plane-ip> version
    
    # Check node status
    kubectl get nodes
@@ -109,7 +109,7 @@ If the upgrade fails:
 
 2. **Or Rollback via Talos**:
    ```bash
-   talosctl --nodes 192.168.30.50 rollback
+   talosctl --nodes <control-plane-ip> rollback
    ```
 
 ## Kubernetes Upgrades
@@ -134,13 +134,13 @@ See [Talos Support Matrix](https://www.talos.dev/docs/support-matrix/)
    talhelper genconfig
    
    talosctl --talosconfig clusterconfig/talosconfig \
-     --nodes 192.168.30.50 \
-     apply-config --file clusterconfig/homelab-talos-cp01.yaml
+     --nodes <control-plane-ip> \
+     apply-config --file clusterconfig/homelab-talos-cp02.yaml  # control plane; see talos/talconfig.yaml
    ```
 
 3. **Trigger Upgrade**:
    ```bash
-   talosctl --nodes 192.168.30.50 upgrade-k8s --to v1.33.0
+   talosctl --nodes <control-plane-ip> upgrade-k8s --to v1.33.0
    ```
 
 4. **Monitor**:
@@ -232,56 +232,38 @@ git push
 | Application configs | TrueNAS `/k8s-config` | ZFS snapshots | Daily |
 | Media | TrueNAS `/media` | ZFS snapshots | Daily/Weekly |
 | Kubernetes secrets | Cluster | Velero (optional) | Daily |
-| etcd | Talos node | etcd snapshot | Daily |
+| etcd | NAS (`etcd-backup/etcd-snapshots/` in `nfs-config`) | CronJob, see below | Daily |
 
-### etcd Backup
+### Manual etcd Backup
+
+Node address: see `talos/talconfig.yaml`.
 
 ```bash
 # Create etcd snapshot
-talosctl --nodes 192.168.30.50 etcd snapshot /tmp/etcd-backup.db
+talosctl --nodes <control-plane-ip> etcd snapshot /tmp/etcd-backup.db
 
 # Copy to local machine
-talosctl --nodes 192.168.30.50 copy /tmp/etcd-backup.db ./etcd-backup.db
+talosctl --nodes <control-plane-ip> copy /tmp/etcd-backup.db ./etcd-backup.db
 ```
 
-### Automate etcd Backup
+### Automated etcd Backup
 
-Create a CronJob:
+A CronJob (`kubernetes/core/etcd-backup`, namespace `etcd-backup`) snapshots etcd daily through
+the Talos API and stores it on the NAS. Schedule, retention and image tags are in that app's
+`values.yaml`.
 
-```yaml
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: etcd-backup
-  namespace: kube-system
-spec:
-  schedule: "0 2 * * *"  # Daily at 2 AM
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-            - name: backup
-              image: ghcr.io/siderolabs/talosctl:v1.9.1
-              command:
-                - /bin/sh
-                - -c
-                - |
-                  talosctl etcd snapshot /backup/etcd-$(date +%Y%m%d).db
-              volumeMounts:
-                - name: backup
-                  mountPath: /backup
-                - name: talosconfig
-                  mountPath: /var/run/secrets/talos.dev
-          volumes:
-            - name: backup
-              persistentVolumeClaim:
-                claimName: etcd-backups
-            - name: talosconfig
-              secret:
-                secretName: talos-secrets
-          restartPolicy: OnFailure
-```
+- **Access:** a `talos.dev` ServiceAccount with the `os:etcd:backup` role only (not `os:admin`).
+  The matching `kubernetesTalosAPIAccess` settings are in `talos/talconfig.yaml`; changing them
+  needs a machine-config apply.
+- **Steps:** `talosctl etcd snapshot`, then `etcdutl snapshot status` to check the file, then
+  copy to the NAS and prune. A failing step or a file under the minimum size fails the Job.
+- **Location:** the `etcd-snapshots` PVC on `nfs-config`, so the files sit in
+  `<k8s-config share>/etcd-backup/etcd-snapshots/` on the NAS, named `etcd-<UTC timestamp>.db`.
+  This is inside the `nfs-config` share, so the offsite copy (BAK-2) covers it.
+- **Retention:** the newest snapshots are kept (count in `values.yaml`, one per day). Pruning
+  happens only after a new snapshot is stored.
+- **Check it ran:** `kubectl -n etcd-backup get cronjob,job` and look for a recent file on the NAS.
+  Run one now with `kubectl -n etcd-backup create job --from=cronjob/etcd-backup etcd-backup-manual`.
 
 ### TrueNAS Snapshots
 
@@ -327,10 +309,10 @@ kubectl rollout restart deployment <name> -n <namespace>
 
 ```bash
 # Reboot node
-talosctl --nodes 192.168.30.50 reboot
+talosctl --nodes <control-plane-ip> reboot
 
 # Wait for health
-talosctl --nodes 192.168.30.50 health --wait-timeout 10m
+talosctl --nodes <control-plane-ip> health --wait-timeout 10m
 
 # Verify pods
 kubectl get pods -A
@@ -345,19 +327,19 @@ kubectl get pods -A
 2. **Apply Configuration**:
    ```bash
    talosctl apply-config --insecure \
-     --nodes 192.168.30.50 \
-     --file talos/clusterconfig/homelab-talos-cp01.yaml
+     --nodes <control-plane-ip> \
+     --file talos/clusterconfig/homelab-talos-cp02.yaml  # control plane; see talos/talconfig.yaml
    ```
 
 3. **Restore etcd** (if backup available):
    ```bash
-   talosctl --nodes 192.168.30.50 etcd recover \
+   talosctl --nodes <control-plane-ip> etcd recover \
      --backup-path=/path/to/etcd-backup.db
    ```
 
 4. **Or Bootstrap Fresh**:
    ```bash
-   talosctl --nodes 192.168.30.50 bootstrap
+   talosctl --nodes <control-plane-ip> bootstrap
    ```
 
 5. **Apply ArgoCD Apps**:

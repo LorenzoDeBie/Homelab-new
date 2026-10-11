@@ -1,0 +1,14 @@
+# Snapshot directory on the NAS. The nfs-config StorageClass creates
+# <share>/<namespace>/<pvc name>/ itself. Retain keeps the data if the PVC goes.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: etcd-snapshots
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs-config
+  resources:
+    requests:
+      storage: 5Gi
