@@ -133,7 +133,7 @@ Described by role. Concrete names, IPs and versions live in `talos/talconfig.yam
 | SEC-1 | No inbound ports are open on the home router; public services are reachable only through the tunnel. | External port scan of the home IP shows nothing open. | met |
 | SEC-2 | Internal web UIs require SSO, except apps with their own login (Plex, Seerr). | Each internal hostname redirects to SSO or its own login. | met |
 | SEC-3 | OIDC clients verify the identity provider's TLS certificate. | No skip-verify flags in the repo. | planned |
-| SEC-4 | Secrets exist in Git only as SOPS ciphertext. Decrypted secrets and etcd snapshots are never stored in the working tree. | Gitignore covers snapshot files; no plaintext secrets in history. | partial |
+| SEC-4 | Secrets exist in Git only as SOPS ciphertext. Decrypted secrets and etcd snapshots are never stored in the working tree. | Gitignore covers snapshot files and decrypted-output names; no plaintext secrets in history. | partial |
 | SEC-5 | In-cluster components get least-privilege access. Only components whose job requires it can read Secrets cluster-wide. | RBAC review of monitoring and logging components. | planned |
 | SEC-6 | Download client traffic leaves through a VPN, with no traffic when the VPN is down. | Client reports the VPN exit IP; stopping the VPN stops traffic. | planned |
 | SEC-7 | Guest devices on the tailnet can use the exit node only, not the home networks. | ACL test from a guest device. | planned |

@@ -13,6 +13,27 @@ age.key
 # Talos generated configs (contain secrets)
 talos/clusterconfig/
 
+# etcd snapshots (contain every cluster secret in plaintext)
+*.snapshot
+etcd-*.db
+
+# Decrypted SOPS output (*.sops.yaml is encrypted and must stay tracked)
+*.dec
+*.dec.*
+*.decrypted
+*.decrypted.*
+*.plain
+*.plain.*
+*.unencrypted
+*.unencrypted.*
+
+# Generated cluster credentials
+kubeconfig
+*.kubeconfig
+talosconfig
+**/controlplane.yaml
+**/worker.yaml
+
 # Kubernetes secrets (unencrypted)
 # Note: *.sops.yaml files ARE safe to commit (they're encrypted)
 **/secret.yaml
