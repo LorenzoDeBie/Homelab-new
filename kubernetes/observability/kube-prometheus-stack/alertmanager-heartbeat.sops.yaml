@@ -8,7 +8,7 @@ metadata:
     namespace: observability
 type: Opaque
 stringData:
-    url: ENC[AES256_GCM,data:5XfRk4etnW3yx491QEdPhMFzZvXL,iv:3/YvPIAIUoZ8N9BzrK/cWDE+0QQdgEJ/rpWra7scN3Q=,tag:Q3Y27XPrjXFW2SYZ+yzmWg==,type:str]
+    url: ENC[AES256_GCM,data:2onlyj14Bx7+Uns4/uOA8rRKP4sJc5l6yIOO9hPwAtpQc6aSbsdvbOuSmOhoEuRzgOoCwZ6yc/8=,iv:dACRM3rjTWvNtIpCo5APDkKMGN2d6b7os+XXYH2ImiM=,tag:8XnhI3n/JVsVDUh0UN9hVg==,type:str]
 sops:
     age:
         - recipient: age1g6uhy72aszly2j77d0wmy4mwy5f9ezxe2w9fu2ensal4mn5uufyqqpcf8h
@@ -20,7 +20,7 @@ sops:
             Ny9RV0laNHlEV2l4b0lFTDdVK3JUSTAKDdsJUqlA1EgYcbVvTIoFaM1Vr/ed1w8c
             CCvHRIXCW7Z69sVlyNCCpXIeNuQT3Vmbuvapy2sj5mWY8VKzn/hfZQ==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-10-10T23:52:10Z"
-    mac: ENC[AES256_GCM,data:LO8zBZZpMmNsPYs0qdkEjmSA7sFWN1I76YO+oYY4i/chK3LYnYTTFIUNFFwD5PInlcXsMgm7+LMETD271yCL8yEIgzUypsx+KYRwpxxP/vref0MB3KahmHhL1tMqRxfJJTJ5wEFuig6pVsxHTwCTsyd9aTIoFs3kMq0w67iy1yg=,iv:HfNqpCU0IzIvJKstNjyStGKDku2S9ST59J8DteZdr/0=,tag:nWjuU6+PWNw+XVz/xem9zA==,type:str]
+    lastmodified: "2026-10-11T10:44:25Z"
+    mac: ENC[AES256_GCM,data:i2nZrYCz9xNULBjGeyDDjJXMY3fB+kR780KCMmM0O8TzCjiF8K7ZCnhCnkBqYVyFiSjgRcuaVWOtm4DB5cyIBu1gVnshS53YFZYR33xnMxAZFMq6HerSHhNZcSkEi555XJuyfrGYQxSuBqzDr0TVfYWQI2ZGuOkvoWNMT937m7g=,iv:PnjKznQ4zCjvEJ/VIodpcwNWS6WZQF9hpd91B+nr2Ps=,tag:P0ng4v1M3UESFeWl/x/Opw==,type:str]
     encrypted_regex: ^(data|stringData)$
     version: 3.12.2
