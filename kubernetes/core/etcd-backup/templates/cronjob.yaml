@@ -30,7 +30,7 @@ spec:
               type: RuntimeDefault
           initContainers:
             - name: snapshot
-              image: "{{ .Values.images.talosctl.repository }}:{{ .Values.images.talosctl.tag }}"
+              image: "{{ .Values.images.talosctlImage.repository }}:{{ .Values.images.talosctlImage.tag }}"
               env:
                 - name: TALOSCONFIG
                   value: /var/run/secrets/talos.dev/config
@@ -60,7 +60,7 @@ spec:
                 limits:
                   memory: 512Mi
             - name: verify
-              image: "{{ .Values.images.etcdutl.repository }}:{{ .Values.images.etcdutl.tag }}"
+              image: "{{ .Values.images.etcdutlImage.repository }}:{{ .Values.images.etcdutlImage.tag }}"
               command: ["/usr/local/bin/etcdutl"]
               args: ["snapshot", "status", "/work/etcd.db", "--write-out=table"]
               securityContext: *sc
@@ -75,7 +75,7 @@ spec:
                   memory: 512Mi
           containers:
             - name: store
-              image: "{{ .Values.images.shell.repository }}:{{ .Values.images.shell.tag }}"
+              image: "{{ .Values.images.shellImage.repository }}:{{ .Values.images.shellImage.tag }}"
               env:
                 - name: KEEP
                   value: {{ .Values.keep | quote }}
@@ -109,7 +109,7 @@ spec:
                   fi
                   # talosctl writes 0600 as UID 65532; let other readers (the
                   # offsite copy) read it.
-                  chmod 0644 "$DST/.$NAME.partial"
+                  chmod 0644 "$DST/.$NAME.partial" || echo "WARN: chmod failed; offsite reader may not be able to read $NAME"
                   mv "$DST/.$NAME.partial" "$DST/$NAME"
                   echo "stored $NAME (${SIZE} bytes)"
 

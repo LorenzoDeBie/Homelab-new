@@ -17,16 +17,18 @@ talosNode: 192.168.40.51
 # Optional override for the API endpoint. Empty uses the talosconfig default.
 talosEndpoint: ""
 
-# Split into repository/tag so Renovate's helm-values manager tracks them.
-# renovate.json5 stops talosctl and etcd from automerging: bump them by hand
-# together with talosVersion in talos/talconfig.yaml and the etcd minor it ships.
+# Renovate's helm-values manager only tracks keys whose name ends in "image"
+# and that hold repository/tag, so keep the *Image names. A pinned digest is
+# written into tag as "tag@sha256:...". renovate.json5 stops talosctl and etcd
+# from automerging: bump them by hand together with talosVersion in
+# talos/talconfig.yaml and the etcd minor it ships.
 images:
-  talosctl:
+  talosctlImage:
     repository: ghcr.io/siderolabs/talosctl
     tag: v1.12.5
-  etcdutl:
+  etcdutlImage:
     repository: gcr.io/etcd-development/etcd
     tag: v3.6.15
-  shell:
+  shellImage:
     repository: alpine
     tag: "3.22"

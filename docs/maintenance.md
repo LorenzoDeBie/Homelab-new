@@ -76,10 +76,10 @@ This document covers ongoing maintenance procedures including upgrades, backups,
 
 3. **Perform Upgrade**:
    ```bash
-   # Using the Talos installer image
-   talosctl --talosconfig clusterconfig/talosconfig \
-     --nodes <control-plane-ip> \
-     upgrade --image ghcr.io/siderolabs/installer:v1.9.2
+   # Prints a talosctl upgrade command per node (or only the one given with
+   # --node), each with the factory image for that node's schematic (wk01
+   # needs i915). Run them one node at a time. Never use the plain installer image.
+   talhelper gencommand upgrade
    ```
 
 4. **Monitor Upgrade**:
@@ -135,7 +135,7 @@ See [Talos Support Matrix](https://www.talos.dev/docs/support-matrix/)
    
    talosctl --talosconfig clusterconfig/talosconfig \
      --nodes <control-plane-ip> \
-     apply-config --file clusterconfig/homelab-talos-cp01.yaml
+     apply-config --file clusterconfig/homelab-talos-cp02.yaml  # control plane; see talos/talconfig.yaml
    ```
 
 3. **Trigger Upgrade**:
@@ -328,7 +328,7 @@ kubectl get pods -A
    ```bash
    talosctl apply-config --insecure \
      --nodes <control-plane-ip> \
-     --file talos/clusterconfig/homelab-talos-cp01.yaml
+     --file talos/clusterconfig/homelab-talos-cp02.yaml  # control plane; see talos/talconfig.yaml
    ```
 
 3. **Restore etcd** (if backup available):
