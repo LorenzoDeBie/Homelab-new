@@ -1,0 +1,6 @@
+apiVersion: v2
+name: etcd-backup
+description: Daily etcd snapshot to the NAS through the Talos API
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

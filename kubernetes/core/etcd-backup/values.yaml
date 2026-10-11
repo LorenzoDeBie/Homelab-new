@@ -1,0 +1,22 @@
+# Daily etcd snapshot (spec BAK-1). See docs/maintenance.md, "etcd Backup".
+
+schedule: "30 3 * * *"
+
+# Newest snapshots to keep. One per day, so this is 14 days. Counted by
+# number, not age, so a few failed days never delete the last good ones.
+keep: 14
+
+# Anything smaller than this is treated as a failed snapshot.
+minSizeBytes: 102400
+
+# Optional. Leave empty to use the endpoints in the talosconfig that Talos
+# generates for the ServiceAccount. Set to a control plane address (see
+# talos/talconfig.yaml) only if talosctl cannot find the API on its own.
+talosEndpoint: ""
+
+images:
+  # Keep the talosctl tag in step with talosVersion in talos/talconfig.yaml.
+  talosctl: ghcr.io/siderolabs/talosctl:v1.12.5
+  # Keep etcd on the minor version that this Talos release ships.
+  etcdutl: gcr.io/etcd-development/etcd:v3.6.15
+  shell: alpine:3.22

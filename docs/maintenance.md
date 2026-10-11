@@ -244,44 +244,24 @@ talosctl --nodes 192.168.30.50 etcd snapshot /tmp/etcd-backup.db
 talosctl --nodes 192.168.30.50 copy /tmp/etcd-backup.db ./etcd-backup.db
 ```
 
-### Automate etcd Backup
+### Automated etcd Backup
 
-Create a CronJob:
+A CronJob (`kubernetes/core/etcd-backup`, namespace `etcd-backup`) snapshots etcd daily through
+the Talos API and stores it on the NAS. Schedule, retention and image tags are in that app's
+`values.yaml`.
 
-```yaml
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: etcd-backup
-  namespace: kube-system
-spec:
-  schedule: "0 2 * * *"  # Daily at 2 AM
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-            - name: backup
-              image: ghcr.io/siderolabs/talosctl:v1.9.1
-              command:
-                - /bin/sh
-                - -c
-                - |
-                  talosctl etcd snapshot /backup/etcd-$(date +%Y%m%d).db
-              volumeMounts:
-                - name: backup
-                  mountPath: /backup
-                - name: talosconfig
-                  mountPath: /var/run/secrets/talos.dev
-          volumes:
-            - name: backup
-              persistentVolumeClaim:
-                claimName: etcd-backups
-            - name: talosconfig
-              secret:
-                secretName: talos-secrets
-          restartPolicy: OnFailure
-```
+- **Access:** a `talos.dev` ServiceAccount with the `os:etcd:backup` role only (not `os:admin`).
+  The matching `kubernetesTalosAPIAccess` settings are in `talos/talconfig.yaml`; changing them
+  needs a machine-config apply.
+- **Steps:** `talosctl etcd snapshot`, then `etcdutl snapshot status` to check the file, then
+  copy to the NAS and prune. A failing step or a file under the minimum size fails the Job.
+- **Location:** the `etcd-snapshots` PVC on `nfs-config`, so the files sit in
+  `<k8s-config share>/etcd-backup/etcd-snapshots/` on the NAS, named `etcd-<UTC timestamp>.db`.
+  This is inside the `nfs-config` share, so the offsite copy (BAK-2) covers it.
+- **Retention:** the newest snapshots are kept (count in `values.yaml`, one per day). Pruning
+  happens only after a new snapshot is stored.
+- **Check it ran:** `kubectl -n etcd-backup get cronjob,job` and look for a recent file on the NAS.
+  Run one now with `kubectl -n etcd-backup create job --from=cronjob/etcd-backup etcd-backup-manual`.
 
 ### TrueNAS Snapshots
 

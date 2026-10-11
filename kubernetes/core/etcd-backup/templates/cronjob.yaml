@@ -1,0 +1,137 @@
+# Daily etcd snapshot. Three steps, each in a pinned image:
+#   1. talosctl takes the snapshot through the Talos API.
+#   2. etcdutl checks it (fails on a corrupt or empty file).
+#   3. a shell copies it to the NAS and prunes old ones.
+# Any failing step fails the Job. The job name is stable so alerts can key on it.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: etcd-backup
+  namespace: {{ .Release.Namespace }}
+spec:
+  schedule: {{ .Values.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 1800
+      template:
+        spec:
+          restartPolicy: Never
+          # The NFS CSI node plugin does not run on the control plane, so this
+          # pod runs on a worker and reaches the Talos API over the network.
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          initContainers:
+            - name: snapshot
+              image: {{ .Values.images.talosctl }}
+              env:
+                - name: TALOSCONFIG
+                  value: /var/run/secrets/talos.dev/config
+              args:
+                {{- if .Values.talosEndpoint }}
+                - --endpoints={{ .Values.talosEndpoint }}
+                - --nodes={{ .Values.talosEndpoint }}
+                {{- end }}
+                - etcd
+                - snapshot
+                - /work/etcd.db
+              securityContext: &sc
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              volumeMounts:
+                - name: work
+                  mountPath: /work
+                - name: talosconfig
+                  mountPath: /var/run/secrets/talos.dev
+                  readOnly: true
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  memory: 512Mi
+            - name: verify
+              image: {{ .Values.images.etcdutl }}
+              command: ["/usr/local/bin/etcdutl"]
+              args: ["snapshot", "status", "/work/etcd.db", "--write-out=table"]
+              securityContext: *sc
+              volumeMounts:
+                - name: work
+                  mountPath: /work
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  memory: 512Mi
+          containers:
+            - name: store
+              image: {{ .Values.images.shell }}
+              env:
+                - name: KEEP
+                  value: {{ .Values.keep | quote }}
+                - name: MIN_SIZE
+                  value: {{ .Values.minSizeBytes | quote }}
+              command:
+                - sh
+                - -ec
+                - |
+                  SRC=/work/etcd.db
+                  DST=/backup
+
+                  SIZE=$(wc -c < "$SRC")
+                  if [ "$SIZE" -lt "$MIN_SIZE" ]; then
+                    echo "FATAL: snapshot is only ${SIZE} bytes (minimum ${MIN_SIZE})"
+                    exit 1
+                  fi
+
+                  # Leftovers from an interrupted run (runs never overlap).
+                  rm -f "$DST"/.etcd-*.partial
+
+                  NAME="etcd-$(date -u +%Y%m%dT%H%M%SZ).db"
+                  # Copy under a dotted name and rename, so a partial file never
+                  # looks like a finished snapshot (and never gets picked up by
+                  # an offsite copy).
+                  cp "$SRC" "$DST/.$NAME.partial"
+                  if [ "$(wc -c < "$DST/.$NAME.partial")" -ne "$SIZE" ]; then
+                    echo "FATAL: copy to the NAS has the wrong size"
+                    rm -f "$DST/.$NAME.partial"
+                    exit 1
+                  fi
+                  mv "$DST/.$NAME.partial" "$DST/$NAME"
+                  echo "stored $NAME (${SIZE} bytes)"
+
+                  # Prune only after the new snapshot is safely stored.
+                  ls -1 "$DST"/etcd-*.db | sort -r | tail -n +"$((KEEP + 1))" | xargs -r rm -f --
+                  echo "snapshots on the NAS:"
+                  ls -l "$DST"/etcd-*.db
+              securityContext: *sc
+              volumeMounts:
+                - name: work
+                  mountPath: /work
+                - name: backup
+                  mountPath: /backup
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  memory: 256Mi
+          volumes:
+            - name: work
+              emptyDir: {}
+            - name: talosconfig
+              secret:
+                secretName: etcd-backup-talos
+            - name: backup
+              persistentVolumeClaim:
+                claimName: etcd-snapshots
