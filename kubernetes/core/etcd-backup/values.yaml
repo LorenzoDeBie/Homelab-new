@@ -9,14 +9,24 @@ keep: 14
 # Anything smaller than this is treated as a failed snapshot.
 minSizeBytes: 102400
 
-# Optional. Leave empty to use the endpoints in the talosconfig that Talos
-# generates for the ServiceAccount. Set to a control plane address (see
-# talos/talconfig.yaml) only if talosctl cannot find the API on its own.
+# Control plane address that apid dials for the snapshot (see talos/talconfig.yaml).
+# Required: the talosconfig Talos generates for the ServiceAccount has endpoints
+# but no nodes, and talosctl refuses to run without --nodes.
+talosNode: 192.168.40.51
+
+# Optional override for the API endpoint. Empty uses the talosconfig default.
 talosEndpoint: ""
 
+# Split into repository/tag so Renovate's helm-values manager tracks them.
+# renovate.json5 stops talosctl and etcd from automerging: bump them by hand
+# together with talosVersion in talos/talconfig.yaml and the etcd minor it ships.
 images:
-  # Keep the talosctl tag in step with talosVersion in talos/talconfig.yaml.
-  talosctl: ghcr.io/siderolabs/talosctl:v1.12.5
-  # Keep etcd on the minor version that this Talos release ships.
-  etcdutl: gcr.io/etcd-development/etcd:v3.6.15
-  shell: alpine:3.22
+  talosctl:
+    repository: ghcr.io/siderolabs/talosctl
+    tag: v1.12.5
+  etcdutl:
+    repository: gcr.io/etcd-development/etcd
+    tag: v3.6.15
+  shell:
+    repository: alpine
+    tag: "3.22"

@@ -30,15 +30,15 @@ spec:
               type: RuntimeDefault
           initContainers:
             - name: snapshot
-              image: {{ .Values.images.talosctl }}
+              image: "{{ .Values.images.talosctl.repository }}:{{ .Values.images.talosctl.tag }}"
               env:
                 - name: TALOSCONFIG
                   value: /var/run/secrets/talos.dev/config
               args:
                 {{- if .Values.talosEndpoint }}
                 - --endpoints={{ .Values.talosEndpoint }}
-                - --nodes={{ .Values.talosEndpoint }}
                 {{- end }}
+                - --nodes={{ required "talosNode is required" .Values.talosNode }}
                 - etcd
                 - snapshot
                 - /work/etcd.db
@@ -60,7 +60,7 @@ spec:
                 limits:
                   memory: 512Mi
             - name: verify
-              image: {{ .Values.images.etcdutl }}
+              image: "{{ .Values.images.etcdutl.repository }}:{{ .Values.images.etcdutl.tag }}"
               command: ["/usr/local/bin/etcdutl"]
               args: ["snapshot", "status", "/work/etcd.db", "--write-out=table"]
               securityContext: *sc
@@ -75,7 +75,7 @@ spec:
                   memory: 512Mi
           containers:
             - name: store
-              image: {{ .Values.images.shell }}
+              image: "{{ .Values.images.shell.repository }}:{{ .Values.images.shell.tag }}"
               env:
                 - name: KEEP
                   value: {{ .Values.keep | quote }}
@@ -107,9 +107,14 @@ spec:
                     rm -f "$DST/.$NAME.partial"
                     exit 1
                   fi
+                  # talosctl writes 0600 as UID 65532; let other readers (the
+                  # offsite copy) read it.
+                  chmod 0644 "$DST/.$NAME.partial"
                   mv "$DST/.$NAME.partial" "$DST/$NAME"
                   echo "stored $NAME (${SIZE} bytes)"
 
+                  # Retention is by file count, not age: extra manual runs or
+                  # retries use up slots. Only etcd-*.db files are counted.
                   # Prune only after the new snapshot is safely stored.
                   ls -1 "$DST"/etcd-*.db | sort -r | tail -n +"$((KEEP + 1))" | xargs -r rm -f --
                   echo "snapshots on the NAS:"
