@@ -3,6 +3,10 @@ kind: Application
 metadata:
   name: seerr
   namespace: argocd
+  annotations:
+    # The chart's HTTPRoute omits fields the API server defaults (group, kind,
+    # weight); a client-side diff reports those as permanent drift.
+    argocd.argoproj.io/compare-options: ServerSideDiff=true
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -19,6 +23,8 @@ spec:
     namespace: media
   syncPolicy:
     automated:
+      # Explicit so the root app restores it if auto-sync is turned off in the UI.
+      enabled: true
       prune: true
       selfHeal: true
     syncOptions:
