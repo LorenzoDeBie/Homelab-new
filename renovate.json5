@@ -60,6 +60,18 @@
         'talos',
       ],
     },
+    {
+      // Must follow talosVersion and the etcd minor Talos ships: bump by hand.
+      matchPackageNames: [
+        'ghcr.io/siderolabs/talosctl',
+        'gcr.io/etcd-development/etcd',
+      ],
+      automerge: false,
+      labels: [
+        'infrastructure',
+        'talos',
+      ],
+    },
   ],
   'helm-values': {
     managerFilePatterns: [

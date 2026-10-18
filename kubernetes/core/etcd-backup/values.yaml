@@ -1,0 +1,34 @@
+# Daily etcd snapshot (spec BAK-1). See docs/maintenance.md, "etcd Backup".
+
+schedule: "30 3 * * *"
+
+# Newest snapshots to keep. One per day, so this is 14 days. Counted by
+# number, not age, so a few failed days never delete the last good ones.
+keep: 14
+
+# Anything smaller than this is treated as a failed snapshot.
+minSizeBytes: 102400
+
+# Control plane address that apid dials for the snapshot (see talos/talconfig.yaml).
+# Required: the talosconfig Talos generates for the ServiceAccount has endpoints
+# but no nodes, and talosctl refuses to run without --nodes.
+talosNode: 192.168.40.51
+
+# Optional override for the API endpoint. Empty uses the talosconfig default.
+talosEndpoint: ""
+
+# Renovate's helm-values manager only tracks keys whose name ends in "image"
+# and that hold repository/tag, so keep the *Image names. A pinned digest is
+# written into tag as "tag@sha256:...". renovate.json5 stops talosctl and etcd
+# from automerging: bump them by hand together with talosVersion in
+# talos/talconfig.yaml and the etcd minor it ships.
+images:
+  talosctlImage:
+    repository: ghcr.io/siderolabs/talosctl
+    tag: v1.12.5
+  etcdutlImage:
+    repository: gcr.io/etcd-development/etcd
+    tag: v3.6.15
+  shellImage:
+    repository: alpine
+    tag: "3.22"

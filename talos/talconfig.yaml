@@ -179,8 +179,10 @@ controlPlane:
             enabled: true
             allowedRoles:
               - os:admin
+              - os:etcd:backup
             allowedKubernetesNamespaces:
               - system-upgrade
+              - etcd-backup
 
 worker:
   patches:
