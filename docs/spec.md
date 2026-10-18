@@ -102,7 +102,7 @@ Described by role. Concrete names, IPs and versions live in `talos/talconfig.yam
 | ID | Requirement | Verify | Status |
 |----|-------------|--------|--------|
 | BAK-1 | etcd is snapshotted daily to the NAS, with at least 7 days retained. | Snapshot files with recent timestamps on the NAS. | met |
-| BAK-2 | App config on `nfs-config` (excluding metrics and logs) is copied offsite daily from a consistent NAS snapshot. | Offsite bucket shows a copy under 24 h old. | planned |
+| BAK-2 | App config on `nfs-config` (excluding metrics and logs) is copied offsite daily from a consistent NAS snapshot. | Offsite bucket shows a copy under 24 h old. | met |
 | BAK-3 | Plex config is copied nightly from node-local disk to the NAS. | Backup job succeeds; copy is under 24 h old. | met |
 | BAK-4 | The SOPS age key has at least two independent copies, one of them usable without any homelab hardware. | Recover the key from the second copy. | met |
 | BAK-5 | A restore from offsite is tested for at least one app per year. | App starts with restored config. | planned |
