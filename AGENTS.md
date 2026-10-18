@@ -28,8 +28,13 @@ target state, with requirement IDs and current status, is in `docs/spec.md`.
 2. **Never print secret values.** Don't run `sops -d` to stdout, `kubectl get secret -o yaml`, or
    `cat` on Talos configs. If you need to check a secret, check which keys it has, not their
    values.
-3. **Never modify or commit** `age.key`, `talos/clusterconfig/`, `*.tfstate`, `*.tfvars` or etcd
-   snapshots (`*.snapshot`).
+3. **Never modify or commit** `age.key`, `*.age`, `talos/clusterconfig/`, `/talos/talsecret.yaml`,
+   `*.tfstate`, `*.tfvars`, etcd snapshots (`*.snapshot`, `snapshot.db`, `etcd-*.db`), decrypted
+   SOPS output (`*.dec`, `*.decrypted`, `*.plain`, `*.unencrypted`, alone or before another
+   extension; `secret.yaml`, `secrets.yaml`) or generated `kubeconfig`/`*.kubeconfig`/`talosconfig`
+   and `/controlplane.yaml`, `/worker.yaml`, `/talos/controlplane.yaml`, `/talos/worker.yaml`.
+   `.gitignore` covers all of these. Write decrypted output outside the repo (for example `/tmp`);
+   no pattern can catch an arbitrary name.
 4. **Secrets are SOPS-encrypted only** (`*.sops.yaml`; rules in `.sops.yaml`). Encrypt before
    `git add`, then check with `git diff --cached` that only ciphertext is staged.
 5. **Keep private information out of the repo, PRs and issues:** names of people, household
