@@ -467,13 +467,30 @@ cd /mnt/tank/k8s-config/.zfs/snapshot/backup-20240101/
 cp -r media/sonarr-config /mnt/tank/k8s-config/media/
 ```
 
-### Replication (Off-site Backup)
+### Off-site Backup (BAK-2)
 
-For disaster recovery, configure ZFS replication to another TrueNAS or ZFS system:
+A TrueNAS Cloud Sync task (Data Protection > Cloud Sync Tasks) pushes the whole `k8s-config`
+share to B2 object storage every day:
 
-1. Navigate to Tasks > Replication Tasks
-2. Configure SSH connection to remote
-3. Set up replication schedule
+- **Source:** the `k8s-config` share, read from a snapshot the task takes just before it runs
+  ("Use Snapshot"). That covers the app configs, the SSO database, the Plex config backup and
+  the etcd snapshots.
+- **Excluded:** `observability/**` (metrics, logs and Grafana, whose dashboards come from Git).
+  Media is on a different share and is not backed up offsite.
+- **Schedule:** daily, after the etcd snapshot and Plex config backup jobs have run, so each
+  upload carries that day's copies.
+- **Mode:** SYNC, so deletions on the NAS are mirrored. The bucket keeps prior versions for 30
+  days, which leaves time to recover from a bad sync.
+- **Encryption:** client-side (rclone crypt) with file names left readable. The encryption
+  password, salt and storage credentials are in the password manager; without them the copy
+  can't be read.
+- **Alerting:** a failed run raises a TrueNAS alert, which goes to the NAS's alert service.
+
+To restore, set up an rclone `b2` remote with those credentials, a `crypt` remote on top of it
+with the same password and salt (filename encryption off), and copy back what you need.
+
+An excluded folder is not removed from the bucket by SYNC. If you add an exclude, delete
+that folder from the bucket by hand; the lifecycle rule removes it for good after 30 days.
 
 ## Troubleshooting
 
