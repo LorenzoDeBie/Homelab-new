@@ -76,7 +76,7 @@ This documentation covers the complete setup and operation of a single-node Kube
 | Document | Description |
 |----------|-------------|
 | [Prerequisites](prerequisites.md) | Tools and accounts needed before starting |
-| [Installation](installation.md) | Step-by-step installation guide |
+| [Rebuild runbook](rebuild.md) | Build or rebuild the cluster from Git, the age key and the latest etcd snapshot |
 | [Architecture](architecture.md) | Detailed architecture documentation |
 | [Configuration](configuration.md) | Configuration reference and customization |
 | [Secrets](secrets.md) | SOPS encryption and secret management |
@@ -112,7 +112,7 @@ This documentation covers the complete setup and operation of a single-node Kube
 
 ## Getting Started
 
-1. **New Installation**: Start with [Prerequisites](prerequisites.md), then follow [Installation](installation.md)
+1. **New installation or rebuild**: Follow the [rebuild runbook](rebuild.md)
 2. **Understanding the Setup**: Read [Architecture](architecture.md) for a complete overview
 3. **Day-to-Day Operations**: See [Maintenance](maintenance.md) for upgrades and backups
 4. **Having Issues**: Check [Troubleshooting](troubleshooting.md) for common problems
