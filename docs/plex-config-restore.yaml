@@ -1,0 +1,97 @@
+# Restores the Plex config from its nightly NAS copy onto talos-wk01's local disk.
+# Used by step 5 of docs/rebuild.md. Not deployed by ArgoCD (nothing under docs/ is).
+#
+# Source: the plex-config-backup PVC (nfs-config), written by the plex-config-backup
+# CronJob in kubernetes/apps/media/plex/templates/config-backup.yaml.
+# Target: a new, empty "plex" PVC on local-path. It has the name, class and size the
+# Plex chart renders, so ArgoCD adopts it when Plex is handed back.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: plex
+  namespace: media
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 50Gi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: plex-config-restore
+  namespace: media
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      # local-path only provisions on talos-wk01, and the PVC binds where this pod
+      # is scheduled (WaitForFirstConsumer).
+      nodeSelector:
+        kubernetes.io/hostname: talos-wk01
+      containers:
+        - name: restore
+          # Same image as the backup CronJob.
+          image: alpine:3.22
+          command:
+            - sh
+            - -euc
+            - |
+              apk add --no-cache rsync findutils >/dev/null
+              SRC=/backup
+              DST=/config
+              PMS="Library/Application Support/Plex Media Server"
+
+              if [ ! -f "$SRC/$PMS/Plug-in Support/Databases/com.plexapp.plugins.library.db" ]; then
+                echo "FATAL: no library database in the NAS copy - refusing to restore"
+                exit 1
+              fi
+              if [ -n "$(ls -A "$DST")" ]; then
+                echo "FATAL: target volume is not empty - refusing to restore"
+                exit 1
+              fi
+
+              # Plain -a: ACL and xattr preservation adds NFS round-trips per file.
+              RS="rsync -a --numeric-ids"
+
+              # Pass 1: everything except the heavy trees.
+              $RS --exclude="/$PMS/Metadata/" --exclude="/$PMS/Media/" "$SRC/" "$DST/"
+              echo "=== pass 1 done ==="
+
+              # Pass 2: the heavy trees, 8 copies at a time. Many small files over
+              # NFS is latency-bound, so parallelism is what makes this fast.
+              for top in Metadata Media; do
+                [ -d "$SRC/$PMS/$top" ] || continue
+                mkdir -p "$DST/$PMS/$top"
+                ls -1 "$SRC/$PMS/$top" \
+                  | xargs -P 8 -I{} $RS "$SRC/$PMS/$top/{}" "$DST/$PMS/$top/"
+                echo "=== $top done ==="
+              done
+
+              # PUID/PGID from kubernetes/apps/media/plex/values.yaml.
+              chown -R 3001:3001 "$DST"
+              echo "=== restore complete ==="
+              du -sh "$SRC" "$DST"
+          volumeMounts:
+            - name: backup
+              mountPath: /backup
+              readOnly: true
+            - name: config
+              mountPath: /config
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              memory: 512Mi
+      volumes:
+        - name: backup
+          persistentVolumeClaim:
+            claimName: plex-config-backup
+            readOnly: true
+        - name: config
+          persistentVolumeClaim:
+            claimName: plex
