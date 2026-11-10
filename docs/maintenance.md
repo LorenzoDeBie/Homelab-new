@@ -264,6 +264,12 @@ the Talos API and stores it on the NAS. Schedule, retention and image tags are i
   happens only after a new snapshot is stored.
 - **Check it ran:** `kubectl -n etcd-backup get cronjob,job` and look for a recent file on the NAS.
   Run one now with `kubectl -n etcd-backup create job --from=cronjob/etcd-backup etcd-backup-manual`.
+- **Alerts (OBS-3):** `BackupJobFailed` when the latest run failed (clears on the next
+  success), `BackupJobStale` when there is no success for 26 hours, and `BackupCronJobMissing`
+  when the CronJob is gone. The rules are in `kubernetes/observability/kube-prometheus-stack/values.yaml`
+  (`backup-jobs`) and cover BAK-1 and the Plex config backup (BAK-3). The offsite copy (BAK-2) is
+  a TrueNAS task, not a CronJob: it alerts through the NAS's own alert service to the same
+  Telegram channel (see "Off-site Backup (BAK-2)" in `docs/storage.md`).
 
 ### TrueNAS Snapshots
 

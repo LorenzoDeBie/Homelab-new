@@ -113,7 +113,7 @@ Described by role. Concrete names, IPs and versions live in `talos/talconfig.yam
 |----|-------------|--------|--------|
 | OBS-1 | If the cluster or its alerting stops working, an alert reaches the admin from outside the homelab within 15 minutes. | Silence the Watchdog alert in Alertmanager; the external check notifies within 15 minutes. | met |
 | OBS-2 | etcd, nodes, NFS mounts and certificates are monitored, with alerts on failure. | `up` is 1 for every scrape target; test alert fires. | partial |
-| OBS-3 | Backup jobs (BAK-1, BAK-2, BAK-3) alert when they fail or don't run. | Break a job; alert fires. | planned |
+| OBS-3 | Backup jobs (BAK-1, BAK-2, BAK-3) alert when they fail or don't run. | Break a job; alert fires. | met |
 
 ### Change safety (CHG)
 
