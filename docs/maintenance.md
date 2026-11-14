@@ -56,7 +56,7 @@ This document covers ongoing maintenance procedures including upgrades, backups,
 ### Before Upgrading
 
 1. **Check Release Notes**: Review [Talos releases](https://github.com/siderolabs/talos/releases)
-2. **Backup Configuration**: Ensure `talos/clusterconfig/` is committed and backed up
+2. **Backup Configuration**: `talos/clusterconfig/` is git-ignored and regenerated from `talos/talsecret.sops.yaml`; make sure the age key that decrypts it is backed up
 3. **Check Compatibility**: Verify Kubernetes version compatibility
 4. **Create VM Snapshot**: In Proxmox, snapshot the Talos VM
 
@@ -227,7 +227,7 @@ git push
 | Data | Location | Method | Frequency |
 |------|----------|--------|-----------|
 | SOPS age key | `age.key` | Manual, offline | Once, then secure storage |
-| Talos configs | `talos/clusterconfig/` | Git | On change |
+| Talos cluster secrets | `talos/talsecret.sops.yaml` (configs in `talos/clusterconfig/` are regenerated with `talhelper genconfig`) | Git, SOPS-encrypted | On change |
 | Git repository | GitHub/GitLab | Git hosting | Continuous |
 | Application configs | TrueNAS `/k8s-config` | ZFS snapshots | Daily |
 | Media | TrueNAS `/media` | ZFS snapshots | Daily/Weekly |
@@ -318,47 +318,17 @@ talosctl --nodes <control-plane-ip> health --wait-timeout 10m
 kubectl get pods -A
 ```
 
-### Scenario 3: Node Corruption (Reinstall Required)
+### Scenario 3: VM Lost or Corrupted (Reinstall Required)
 
-**Resolution**: Reinstall Talos, restore etcd
-
-1. **Boot from Talos ISO** (via Proxmox)
-
-2. **Apply Configuration**:
-   ```bash
-   talosctl apply-config --insecure \
-     --nodes <control-plane-ip> \
-     --file talos/clusterconfig/homelab-talos-cp02.yaml  # control plane; see talos/talconfig.yaml
-   ```
-
-3. **Restore etcd** (if backup available):
-   ```bash
-   talosctl --nodes <control-plane-ip> etcd recover \
-     --backup-path=/path/to/etcd-backup.db
-   ```
-
-4. **Or Bootstrap Fresh**:
-   ```bash
-   talosctl --nodes <control-plane-ip> bootstrap
-   ```
-
-5. **Apply ArgoCD Apps**:
-   ```bash
-   kubectl apply -f kubernetes/core/argocd-apps.yaml
-   kubectl apply -f kubernetes/apps/apps.yaml
-   kubectl apply -f kubernetes/observability/observability.yaml
-   ```
+**Resolution**: Follow the partial-rebuild notes in the [rebuild runbook](rebuild.md). A lost
+worker only needs a new VM and its machine config (plus the Plex config restore if it was
+talos-wk01). A lost control plane also needs etcd
+restored from the latest snapshot (`talosctl bootstrap --recover-from`).
 
 ### Scenario 4: Complete Data Loss
 
-**Resolution**: Full rebuild from Git + backups
-
-1. **Provision new infrastructure** (Terraform)
-2. **Install Talos** (from talconfig)
-3. **Bootstrap Kubernetes**
-4. **Install ArgoCD and apply apps**
-5. **Restore NFS data from TrueNAS backups**
-6. **Recreate SOPS secret from backed-up age.key**
+**Resolution**: Full rebuild from Git, the age key and the latest etcd snapshot. Follow the
+[rebuild runbook](rebuild.md) step by step.
 
 ### Scenario 5: Lost age.key
 

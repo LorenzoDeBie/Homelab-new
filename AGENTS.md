@@ -55,6 +55,7 @@ docs.
 | Internal hostnames | `templates/httproute.yaml` per app, on `*.int.<domain>` via `internal-gateway` |
 | Storage classes | `kubernetes/core/nfs-csi/templates/storage.yaml` (`nfs-config`, `nfs-media`), `local-path` |
 | Dependency updates | `renovate.json5` |
+| How to build or rebuild the cluster | `docs/rebuild.md` (runbook; replaces the old bootstrap steps) |
 
 `README.md`, `docs/` and `plans/` are partly out of date: some still say
 "single-node" or use the old `192.168.30.x` addresses. If docs and code disagree, the code
