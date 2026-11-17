@@ -8,7 +8,7 @@ app-template:
         app:
           image:
             repository: lscr.io/linuxserver/plex
-            tag: latest@sha256:01a53d9c7adcbb3701fbb0a4230c0a37c85453759b6b05a67356c3c7a09de08d
+            tag: latest@sha256:9a1325bf0b34a50993a04be0bdcc7fab841d2a78161bd11b4db4ff8478a7ac2a
           env:
             TZ: Europe/Brussels
             PUID: "3001"
