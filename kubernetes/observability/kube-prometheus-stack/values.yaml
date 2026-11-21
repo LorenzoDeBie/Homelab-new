@@ -46,6 +46,81 @@ kube-prometheus-stack:
                 summary: No healthy etcd scrape target
                 description: Prometheus has not scraped etcd for 10 minutes. Either the control plane is down or the kube-etcd scrape config no longer matches its address.
 
+    # Backup CronJobs (spec OBS-3): etcd snapshot (BAK-1) and Plex config
+    # (BAK-3). The CronJob names are listed in every rule below; keep them in
+    # sync when a backup CronJob is added or renamed. The offsite copy (BAK-2)
+    # is a TrueNAS task and alerts through the NAS itself. The generic KubeJobFailed
+    # also fires on a failure, but it stays until the failed Job is deleted;
+    # BackupJobFailed clears on the next successful run.
+    backup-jobs:
+      groups:
+        - name: backup-jobs
+          rules:
+            # The most recent Job of a backup CronJob has failed.
+            - alert: BackupJobFailed
+              expr: |
+                (
+                  kube_job_status_start_time{job="kube-state-metrics"}
+                    * on (namespace, job_name) group_left (owner_name)
+                      max by (namespace, job_name, owner_name) (
+                        kube_job_owner{owner_kind="CronJob", owner_name=~"etcd-backup|plex-config-backup"}
+                      )
+                    and on (namespace, job_name)
+                      (kube_job_failed{condition="true"} == 1)
+                )
+                == on (namespace, owner_name) group_left ()
+                  max by (namespace, owner_name) (
+                    kube_job_status_start_time{job="kube-state-metrics"}
+                      * on (namespace, job_name) group_left (owner_name)
+                        max by (namespace, job_name, owner_name) (
+                          kube_job_owner{owner_kind="CronJob", owner_name=~"etcd-backup|plex-config-backup"}
+                        )
+                  )
+              for: 5m
+              labels:
+                severity: warning
+              annotations:
+                summary: Backup job {{ $labels.owner_name }} failed
+                description: The latest run of {{ $labels.namespace }}/{{ $labels.owner_name }} (Job {{ $labels.job_name }}) failed. Check its pod logs. The alert clears when the next run succeeds.
+            # No successful run in about a day plus slack. Also covers a job
+            # that never succeeded, is suspended, or is stuck running.
+            - alert: BackupJobStale
+              expr: |
+                (
+                  time() - max by (namespace, cronjob) (
+                    kube_cronjob_status_last_successful_time{job="kube-state-metrics", cronjob=~"etcd-backup|plex-config-backup"}
+                  )
+                  > 26 * 3600
+                )
+                or
+                (
+                  time() - max by (namespace, cronjob) (
+                    kube_cronjob_created{job="kube-state-metrics", cronjob=~"etcd-backup|plex-config-backup"}
+                  )
+                  > 26 * 3600
+                  unless on (namespace, cronjob)
+                    kube_cronjob_status_last_successful_time{job="kube-state-metrics"}
+                )
+              for: 10m
+              labels:
+                severity: warning
+              annotations:
+                summary: Backup job {{ $labels.cronjob }} has not succeeded in over 26 hours
+                description: "{{ $labels.namespace }}/{{ $labels.cronjob }} last succeeded {{ $value | humanizeDuration }} ago (or never, since it was created that long ago). Check whether it is suspended, stuck or failing."
+            # A backup CronJob is gone or renamed, so the rules above can no
+            # longer see it.
+            - alert: BackupCronJobMissing
+              expr: |
+                absent(kube_cronjob_created{job="kube-state-metrics", namespace="etcd-backup", cronjob="etcd-backup"})
+                or
+                absent(kube_cronjob_created{job="kube-state-metrics", namespace="media", cronjob="plex-config-backup"})
+              for: 1h
+              labels:
+                severity: warning
+              annotations:
+                summary: Backup CronJob {{ $labels.cronjob }} not found
+                description: kube-state-metrics reports no CronJob {{ $labels.namespace }}/{{ $labels.cronjob }}. It was deleted or renamed, or kube-state-metrics is down. Update the backup-jobs rules if it was renamed on purpose.
+
   # Grafana configuration
   grafana:
     enabled: true
