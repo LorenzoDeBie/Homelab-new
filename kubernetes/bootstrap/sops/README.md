@@ -23,15 +23,8 @@ age-keygen -o age.key
 
 ## Create Kubernetes Secret
 
-The private key needs to be available to ArgoCD for decryption:
-
-```bash
-# Create the secret in the argocd namespace
-kubectl create namespace argocd
-kubectl create secret generic sops-age \
-  --namespace argocd \
-  --from-file=keys.txt=age.key
-```
+ArgoCD needs the private key to decrypt secrets. Creating the `sops-age` secret is step 3 of
+the [rebuild runbook](../../../docs/rebuild.md#3-sops-age-key-secret).
 
 ## Encrypt a Secret
 

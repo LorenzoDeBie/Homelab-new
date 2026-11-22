@@ -358,4 +358,4 @@ Before proceeding to installation, verify:
 
 ## Next Steps
 
-Once all prerequisites are complete, proceed to [Installation](installation.md).
+Once all prerequisites are complete, follow the [rebuild runbook](rebuild.md).

@@ -93,7 +93,7 @@ Described by role. Concrete names, IPs and versions live in `talos/talconfig.yam
 | ID | Requirement | Verify | Status |
 |----|-------------|--------|--------|
 | REC-1 | After power returns, every host, VM and service comes back without human action within the RTO. | Breaker drill: power off at the breaker, restore, time to all-green. | partial |
-| REC-2 | The cluster can be rebuilt from Git, the age key and the latest etcd snapshot by following a written runbook. | Restore drill into a fresh VM, at least yearly. | planned |
+| REC-2 | The cluster can be rebuilt from Git, the age key and the latest etcd snapshot by following a written runbook. | Restore drill into a fresh VM, at least yearly. | partial |
 | REC-3 | Remote admin access (tailnet route to the home networks, Proxmox UI, NAS out-of-band management) works while the cluster is down. | Stop the cluster VMs, reach Proxmox and IPMI over Tailscale. | planned |
 | REC-4 | Losing the Plex host or its iGPU does not take down the rest of the cluster. | Shut down the Plex worker VM; other apps stay up. | partial |
 
