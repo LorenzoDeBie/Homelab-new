@@ -28,7 +28,7 @@ images:
     tag: v1.12.5
   etcdutlImage:
     repository: gcr.io/etcd-development/etcd
-    tag: v3.6.15
+    tag: v3.7.4@sha256:47d217be8ec4ca943954b5f4bf8029ee9bc0ffb05fbe2a44d579a1f640e03ed4
   shellImage:
     repository: alpine
     tag: "3.22"
