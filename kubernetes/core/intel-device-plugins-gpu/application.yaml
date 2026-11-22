@@ -5,6 +5,9 @@ metadata:
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "-5"
+    # templates/gpu-plugin-resources.yaml is a partial DaemonSet; only a
+    # server-side diff compares it without flagging the operator's fields.
+    argocd.argoproj.io/compare-options: ServerSideDiff=true
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -23,6 +26,13 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    # The partial DaemonSet fails to apply until the operator has created it.
+    retry:
+      limit: 5
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m
     syncOptions:
       - CreateNamespace=true
     managedNamespaceMetadata:

@@ -1,1 +1,10 @@
-intel-device-plugins-operator: {}
+intel-device-plugins-operator:
+  # The chart default limit (100m) throttles the manager above 25% of CFS periods
+  # in short bursts, which trips CPUThrottlingHigh. Peak use is ~50m.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 100Mi
+    limits:
+      cpu: 200m
+      memory: 120Mi
