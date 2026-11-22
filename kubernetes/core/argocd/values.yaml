@@ -107,7 +107,7 @@ argo-cd:
     # Install SOPS binary
     initContainers:
       - name: install-sops
-        image: alpine:latest@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
+        image: alpine:3.24@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
         command:
           - sh
           - -c

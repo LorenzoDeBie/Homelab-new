@@ -39,8 +39,10 @@ spec:
             - hostname: wedding.lorenzodebie.be
               service: http://wp-wedding.wedding.svc.cluster.local:80
         
+        # Pinned so Renovate can track it (the chart default is its old appVersion).
         image:
-          tag: latest
+          repository: cloudflare/cloudflared
+          tag: 2026.2.0@sha256:404528c1cd63c3eb882c257ae524919e4376115e6fe57befca8d603656a91a4c
         replicaCount: 1
   destination:
     server: https://kubernetes.default.svc
