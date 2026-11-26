@@ -25,7 +25,7 @@ talosEndpoint: ""
 images:
   talosctlImage:
     repository: ghcr.io/siderolabs/talosctl
-    tag: v1.12.5
+    tag: v1.14.7@sha256:5567c99a07bec8415dd863c182e2854a93e81c97d7efc87ce06d7802e17a9d93
   etcdutlImage:
     repository: gcr.io/etcd-development/etcd
     tag: v3.6.15
